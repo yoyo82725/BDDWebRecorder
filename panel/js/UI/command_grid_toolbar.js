@@ -107,3 +107,30 @@ $("#command-value").on("input", function(event) {
         }
     }
 });
+
+// # 改
+$("#command-gherkin").on("input", function (event) {
+    var temp = getSelectedRecord();
+    if (temp) {
+        var div = getTdRealValueNode(document.getElementById(temp), 3);
+        // set innerHTML = ""
+        if (div.childNodes && div.childNodes[0]) {
+            div.removeChild(div.childNodes[0]);
+        }
+        div.appendChild(document.createTextNode(event.target.value));
+
+        var command_value = event.target.value;
+        div = getTdShowValueNode(document.getElementById(temp), 3);
+        if (div.childNodes && div.childNodes[0]) {
+            div.removeChild(div.childNodes[0]);
+        }
+        div.appendChild(document.createTextNode(command_value));
+
+        // store command grid to testCase
+        var s_case = getSelectedCase();
+        if (s_case) {
+            sideex_testCase[s_case.id].records = document.getElementById("records-grid").innerHTML;
+            modifyCaseSuite();
+        }
+    }
+});

@@ -18,10 +18,17 @@ function readSuiteFromString(test_suite) {
     sideex_testSuite.count++;
     var suiteName = parseSuiteName(test_suite);
     addTestSuite(suiteName, id);
+    // # 改
+    var suite_gherkin = test_suite.match(/(?:<pre>[\s\S]*?)([\s\S]*?)(?:<\/pre>)/) && test_suite.match(/(?:<pre>[\s\S]*?)([\s\S]*?)(?:<\/pre>)/)[1];
+    var suite_gherkinFileName = test_suite.match(/(?:<h1>[\s\S]*?)([\s\S]*?)(?:<\/h1>)/) && test_suite.match(/(?:<h1>[\s\S]*?)([\s\S]*?)(?:<\/h1>)/)[1];
     // name is used for download
+    // # 改
     sideex_testSuite[id] = {
         file_name: suiteName + '.html',
-        title: suiteName
+        title: suiteName,
+        gherkin: suite_gherkin ? suite_gherkin : '',
+        gherkinAndLine: suite_gherkin ? addFileLine(suite_gherkin) : '',
+        gherkinFileName: suite_gherkinFileName ? suite_gherkinFileName : ''
     };
 
     test_case = test_suite.match(/<table[\s\S]*?<\/table>/gi);
@@ -40,8 +47,8 @@ function parseSuiteName(test_suite) {
 }
 
 // load test suite saved in storage upon starting
-$(function() {
-    chrome.storage.local.get(null, function(result) {
+$(function () {
+    chrome.storage.local.get(null, function (result) {
         try {
             if (result.data) {
                 if (!result.backup) {
@@ -66,13 +73,27 @@ $(function() {
 // get content of a test suite as an HTML string
 function getContentOfTestSuite(s_suite) {
     var cases = s_suite.getElementsByTagName("p"),
-    output = "",
-    old_case = getSelectedCase();
+        output = "",
+        old_case = getSelectedCase();
     for (var i = 0; i < cases.length; ++i) {
         setSelectedCase(cases[i].id);
         saveNewTarget();
+        // # 改
+        // output = output +
+        //     '<table cellpadding="1" cellspacing="1" border="1">\n<thead>\n<tr><td rowspan="1" colspan="3">' +
+        //     sideex_testCase[cases[i].id].title +
+        //     '</td></tr>\n</thead>\n' +
+        //     panelToFile(document.getElementById("records-grid").innerHTML) +
+        //     '</table>\n';
         output = output +
-            '<table cellpadding="1" cellspacing="1" border="1">\n<thead>\n<tr><td rowspan="1" colspan="3">' +
+            '<h1>' +
+            (sideex_testSuite[s_suite.id].gherkinFileName ? sideex_testSuite[s_suite.id].gherkinFileName : '') +
+            '</h1>\n' +
+            '<pre>' +
+            (sideex_testSuite[s_suite.id].gherkin ? sideex_testSuite[s_suite.id].gherkin : '') +
+            '</pre>\n' +
+            '<table cellpadding="1" cellspacing="1" border="1">\n' +
+            '<thead>\n<tr><td rowspan="1" colspan="4">' +
             sideex_testCase[cases[i].id].title +
             '</td></tr>\n</thead>\n' +
             panelToFile(document.getElementById("records-grid").innerHTML) +
@@ -100,7 +121,7 @@ function storeAllTestSuites() {
     var suites = document.getElementById("testCase-grid").getElementsByClassName("message");
     var length = suites.length;
     var data = [];
-    for (var i=0; i<length; i++) {
+    for (var i = 0; i < length; i++) {
         if (suites[i].id.includes("suite")) {
             var suite = suites[i];
             var content = getContentOfTestSuite(suite);
@@ -111,7 +132,7 @@ function storeAllTestSuites() {
 }
 
 // store window size upon resizing
-$(window).on('resize', function() {
+$(window).on('resize', function () {
     var data = {
         window: {
             width: window.outerWidth,
@@ -141,6 +162,7 @@ function saveData() {
         var data = {
             data: storeAllTestSuites()
         };
+        console.log('[saveData()]', data);
         browser.storage.local.set(data);
         if (s_suite) {
             setSelectedSuite(s_suite.id);
@@ -154,7 +176,7 @@ function saveData() {
 }
 
 // save test suite before exiting
-window.addEventListener('beforeunload', function(e) {
+window.addEventListener('beforeunload', function (e) {
     saveData();
 });
 
@@ -168,7 +190,7 @@ function _loadSeleniumCommands() {
         //this.log.debug("func=" + func);
         var r;
         if (func.match(/^do[A-Z]/)) {
-            var action = func.substr(2,1).toLowerCase() + func.substr(3);
+            var action = func.substr(2, 1).toLowerCase() + func.substr(3);
             commands.push(action);
             if (!action.match(/^waitFor/) && nonWaitActions.indexOf(action) < 0) {
                 commands.push(action + "AndWait");
@@ -217,6 +239,9 @@ function _loadSeleniumCommands() {
     commands.push('gotoLabel');
     commands.push('label');
 
+    // # 改 時間判斷Command
+    commands.push('elapsedTimeLessThen');
+
     commands.sort();
 
     var uniqueCommands = [];
@@ -232,7 +257,7 @@ function _loadSeleniumCommands() {
 }
 
 // load Selenium IDE command reference
-$(function() {
+$(function () {
     $.ajax({
         url: 'js/katalon/selenium-ide/iedoc-core.xml',
         success: function (document) {
@@ -244,29 +269,36 @@ $(function() {
 });
 
 // get a command reference
-function scrape(word){
+function scrape(word) {
     emptyNode(document.getElementById("refercontainer"));
-    var command = new Command(word);
-    var def = command.getDefinition();
-    help_log.logHTML((def) ? def.getReferenceFor(command): '');
+    // # 改
+    if (word == 'elapsedTimeLessThen') {
+        var template = `<dd><dt><strong>elapsedTimeLessThen(time)</strong></dt><dd><div>Arguments:</div><ul><li>time - the amount of time to limit (in milliseconds)</li></ul>Limit for the specified amount of time (in milliseconds)<p>Please see samples at <a href="https://github.com/katalon-studio/katalon-recorder-samples" target="_blank">Github</a>.</p></dd></dd>`;
+        document.getElementById("refercontainer").innerHTML = template;
+    } else {
+        var command = new Command(word);
+        var def = command.getDefinition();
+        help_log.logHTML((def) ? def.getReferenceFor(command) : '');
+    }
+    
     $('#tab4.case_roll').scrollTop(0);
 }
 
 // modify and add handler for command grid toolbar buttons
-$(function() {
-    $('#grid-add-btn').on('click', function(event) {
+$(function () {
+    $('#grid-add-btn').on('click', function (event) {
         $('#grid-add').click();
     });
 
-    $('#grid-delete-btn').on('click', function(event) {
+    $('#grid-delete-btn').on('click', function (event) {
         $('#grid-delete').click();
     });
 
-    $('#grid-copy-btn').on('click', function(event) {
+    $('#grid-copy-btn').on('click', function (event) {
         $('#grid-copy').click();
     });
 
-    $('#grid-paste-btn').on('click', function(event) {
+    $('#grid-paste-btn').on('click', function (event) {
         $('#grid-paste').click();
     });
 
@@ -290,7 +322,7 @@ function addContextMenuButton(id, node, menu, isCase) {
     buttonWrapper.innerHTML = '<button class="btn-more"><img src="/katalon/images/SVG/more-icon.svg" alt="More" title="More"></button>';
     var button = buttonWrapper.firstChild;
     node.appendChild(button);
-    button.addEventListener("click", function(event) {
+    button.addEventListener("click", function (event) {
         if (isCase) {
             setSelectedCase(id);
         } else {
@@ -315,34 +347,34 @@ function saveAsFileOfTestCase(fileName, content) {
         saveAs: true,
         conflictAction: 'overwrite'
     });
-    var result = function(id) {
+    var result = function (id) {
         browser.downloads.onChanged.addListener(function downloadCompleted(downloadDelta) {
             if (downloadDelta.id == id && downloadDelta.state &&
                 downloadDelta.state.current == "complete") {
-                $( "#generateToScriptsDialog" ).dialog("close");
+                $("#generateToScriptsDialog").dialog("close");
             } else if (downloadDelta.id == id && downloadDelta.error) {
                 browser.downloads.onChanged.removeListener(downloadCompleted);
             }
         })
     };
-    var onError = function(error) {
+    var onError = function (error) {
         console.log(error);
     };
     downloading.then(result, onError);
 }
 
-$(function() {
-    $("#export").click(function() {
+$(function () {
+    $("#export").click(function () {
 
         // _gaq.push(['_trackEvent', 'app', 'export']);
 
         browser.runtime.sendMessage({
             getExternalCapabilities: true
-        }).then(function(externalCapabilities) {
+        }).then(function (externalCapabilities) {
             var selectInput = $('#select-script-language-id');
             var language = selectInput.val();
             selectInput.find('option.external-exporter').remove();
-            Object.keys(externalCapabilities).forEach(function(capabilityGlobalId) {
+            Object.keys(externalCapabilities).forEach(function (capabilityGlobalId) {
                 var capability = externalCapabilities[capabilityGlobalId];
                 if (capability.type == 'export') {
                     var optionId = 'external-exporter-' + capabilityGlobalId;
@@ -366,7 +398,7 @@ $(function() {
         });
     });
 
-    $("#select-script-language-id").change(function() {
+    $("#select-script-language-id").change(function () {
         handleGenerateToScript();
         saveSetting();
     });
@@ -397,8 +429,8 @@ function saveToFile() {
     saveAsFileOfTestCase(fileName, content);
 }
 
-$(function() {
-    var dialog = $( "#generateToScriptsDialog" );
+$(function () {
+    var dialog = $("#generateToScriptsDialog");
     dialog.dialog({
         autoOpen: false,
         modal: true,
@@ -407,13 +439,13 @@ $(function() {
         buttons: {
             "Copy to Clipboard": copyToClipboard,
             "Save As File...": saveToFile,
-            Close: function() {
+            Close: function () {
                 $(this).dialog("close");
             }
         }
     });
     dialog.dialog({
-        close: function() {
+        close: function () {
             // _gaq.push(['_trackEvent', 'app', 'export-' + $("#select-script-language-id").val()]);
         }
     });
@@ -422,7 +454,7 @@ $(function() {
 function getCommandsToGenerateScripts() {
     var ret = [];
     let commands = getRecordsArray();
-    for (var index=0; index<commands.length; index++) {
+    for (var index = 0; index < commands.length; index++) {
         let commandName = getCommandName(commands[index]);
         let commandTarget = getCommandTarget(commands[index]);
         let commandValue = getCommandValue(commands[index]);
@@ -561,13 +593,13 @@ function loadScripts() {
             script.id = "formatter-script-language-id-" + language + '-' + i;
             script.src = scriptNames[i];
             script.async = false; // This is required for synchronous execution
-            script.onload = function() {
+            script.onload = function () {
                 j++;
             }
             document.head.appendChild(script);
         }
         var interval = setInterval(
-            function() {
+            function () {
                 if (j == scriptNames.length) {
                     clearInterval(interval);
                     generateScripts(isExternalCapability, language);
@@ -668,7 +700,7 @@ function generateScripts(isExternalCapability, language, newFormatter) {
                     commands: commands
                 }
             }
-        ).then(function(response) {
+        ).then(function (response) {
             var payload = response.payload;
             if (response.status) {
                 options = {
@@ -677,9 +709,9 @@ function generateScripts(isExternalCapability, language, newFormatter) {
                 };
                 displayOnCodeMirror(language, payload.content);
             } else {
-                throw(payload);
+                throw (payload);
             }
-        }).catch(function(err) {
+        }).catch(function (err) {
             var content = 'Could not export.';
             if (err) {
                 content += ' Error: ' + JSON.stringify(err) + '.';
@@ -713,7 +745,7 @@ function generateScripts(isExternalCapability, language, newFormatter) {
 // KAT-END
 
 // KAT-BEGIN Show/hide bottom panel
-$(function() {
+$(function () {
     $('#show-hide-bottom-panel').click(function (e) {
         e.stopPropagation();
         var $bottomContent = $('#tab4');
@@ -738,50 +770,60 @@ $(function() {
 // KAT-END
 
 // KAT-BEGIN styling log/reference when clicked
-$(function() {
+$(function () {
     var logLi = $('#history-log');
     var referenceLi = $('#reference-log');
+    // # 改
+    var reportLi = $('#reports');
     var variableLi = $('#variable-log');
     var screenshotLi = $('#screenshot');
     var dataLi = $('#data-files');
     var extensionsLi = $('#extensions');
-    var lis = [logLi, referenceLi, variableLi, screenshotLi, dataLi, extensionsLi];
+    // # 改
+    var lis = [logLi, referenceLi, variableLi, screenshotLi, dataLi, extensionsLi, reportLi];
 
     var logContainer = $('#logcontainer');
     var referenceContainer = $('#refercontainer');
+    // # 改
+    var reportContainer = $('#reportscontainer');
     var variableContainer = $('#variablecontainer');
     var screenshotContainer = $('#screenshotcontainer');
     var dataContainer = $('#datacontainer');
     var extensionsContainer = $('#extensionscontainer');
-    var containers = [logContainer, referenceContainer, variableContainer, screenshotContainer, dataContainer, extensionsContainer];
+    // # 改
+    var containers = [logContainer, referenceContainer, variableContainer, screenshotContainer, dataContainer, extensionsContainer, reportContainer];
 
     var clearLog = $('#clear-log');
     var saveLog = $('#save-log');
     var upload = $('#ka-upload');
-    
+
     var csvAdd = $('#data-files-add-csv');
     var jsonAdd = $('#data-files-add-json');
     var extensionAdd = $('#extension-add');
 
     setActiveTab(logLi, logContainer);
 
-    logLi.on("click", function() {
+    logLi.on("click", function () {
         setActiveTab(logLi, logContainer);
     });
-    referenceLi.on("click", function() {
+    referenceLi.on("click", function () {
         setActiveTab(referenceLi, referenceContainer);
     });
-    variableLi.on("click", function() {
+    variableLi.on("click", function () {
         setActiveTab(variableLi, variableContainer);
     });
-    screenshotLi.on("click", function() {
+    screenshotLi.on("click", function () {
         setActiveTab(screenshotLi, screenshotContainer);
     });
-    dataLi.on('click', function() {
+    dataLi.on('click', function () {
         setActiveTab(dataLi, dataContainer);
     });
-    extensionsLi.on('click', function() {
+    extensionsLi.on('click', function () {
         setActiveTab(extensionsLi, extensionsContainer);
+    });
+    // # 改
+    reportLi.on('click', function () {
+        setActiveTab(reportLi, reportContainer);
     });
 
     function setActiveTab(li, container) {
@@ -809,14 +851,14 @@ $(function() {
             csvAdd.hide();
             jsonAdd.hide();
             extensionAdd.hide();
-        } else if (li == dataLi) { 
+        } else if (li == dataLi) {
             upload.hide();
             saveLog.hide();
             clearLog.hide();
             csvAdd.show();
             jsonAdd.show();
             extensionAdd.hide();
-        } else if (li == extensionsLi) { 
+        } else if (li == extensionsLi) {
             upload.hide();
             saveLog.hide();
             clearLog.hide();
@@ -842,8 +884,8 @@ $(function() {
 // KAT-END
 
 // KAT-BEGIN handle click event for settings button
-$(function() {
-    $('#settings').on('click', function() {
+$(function () {
+    $('#settings').on('click', function () {
         browser.windows.update(
             contentWindowId,
             { focused: true }
@@ -851,13 +893,13 @@ $(function() {
         chrome.tabs.create({
             url: chrome.extension.getURL('katalon/options.html'),
             windowId: contentWindowId
-        }, function(tab){});
+        }, function (tab) { });
     });
 });
 // KAT-END
 
 // KAT-BEGIN add tooltip for button
-$(function() {
+$(function () {
     $('#record').attr('title', "Click and navigate to the desired browser tab and record your tests. NOTE: If the tab has been opened before Katalon Recorder was installed, please refresh it.");
     $('#playback').attr('title', "Run selected test case on the active tab, any interference may stop the process. NOTE: If the tab has been opened before Katalon Recorder was installed, please refresh it.");
     $('#playSuite').attr('title', "Run selected test suite on the active tab, any interference may stop the process. NOTE: If the tab has been opened before Katalon Recorder was installed, please refresh it.");
@@ -875,6 +917,9 @@ $(function() {
     $('#export').attr('title', "Export the current test case to script in C#, Java, Ruby, Python, (Katalon Studio) Groovy, or Robot Framework");
     $('#suite-open').attr('title', "Open test suite");
     $('#suite-plus').attr('title', "Create new test suite");
+    // # 改
+    $('#grid-gherkin-addfile-btn').attr('title', "Add Gherkin File...");
+    $('#grid-view-gherkinfile-btn').attr('title', "View the Gherkin File");
 })
 // KAT-END
 
@@ -922,7 +967,7 @@ $(function() {
 // })
 // KAT-END
 
-$(function() {
+$(function () {
     var slider = $('#slider');
     var sliderContainer = $('#slider-container');
     var speedButton = $('#speed');
@@ -939,7 +984,7 @@ $(function() {
     sliderContainer.append(slider);
     slider.show();
 
-    speedButton.on("click", function() {
+    speedButton.on("click", function () {
         sliderContainer.toggle();
     });
 })
@@ -968,8 +1013,8 @@ function handleDisplayVariables() {
 // KAT-END
 
 // KAT-BEGIN add handler for button "New" click event
-$(function() {
-    $('#new').on('click', function() {
+$(function () {
+    $('#new').on('click', function () {
         saveOldCase();
         $('#add-testCase').click();
     });
@@ -977,7 +1022,7 @@ $(function() {
 // KAT-END
 
 // KAT-BEGIN modify toolbar buttons
-$(function() {
+$(function () {
     // var record = $('#record');
     // var newCase = $('#new');
     // record.after(newCase);
@@ -1010,13 +1055,14 @@ $(function() {
 });
 // KAT-END
 
-$(function() {
+$(function () {
     var manifestData = chrome.runtime.getManifest();
-    $(document).attr('title', 'Katalon Recorder ' + manifestData.version)
+    // # 改
+    $(document).attr('title', 'BDDWebRecorder ' + manifestData.version)
 });
 
 // KAT-BEGIN clear "Save" and "Clear" text
-$(function() {
+$(function () {
     var saveLog = $('#save-log a');
     var clearLog = $('#clear-log a');
 
@@ -1037,8 +1083,8 @@ function switchRecordButton(stop) {
 }
 
 // KAT-BEGIN disable event propagation when double clicking command toolbar fieldset
-$(function() {
-    $('#command-toolbar .fieldset').on("dblclick", function(event) {
+$(function () {
+    $('#command-toolbar .fieldset').on("dblclick", function (event) {
         event.stopPropagation();
     });
 })
@@ -1056,7 +1102,7 @@ function showDialog(html, showOK) {
     var buttons;
     if (showOK) {
         buttons = {
-            Close: function() {
+            Close: function () {
                 $(this).dialog("close");
             }
         };
@@ -1066,13 +1112,13 @@ function showDialog(html, showOK) {
     return $('<div></div>')
         .html(html)
         .dialog({
-            title: 'Katalon Recorder',
+            title: 'BDDWebRecorder',
             resizable: false,
             height: "auto",
             width: 400,
             modal: true,
             buttons: buttons,
-            close: function() {
+            close: function () {
                 $(this).remove();
             }
         });
@@ -1082,18 +1128,18 @@ function showErrorDialog() {
     return showDialog('Something went wrong. Please try again later.', true);
 }
 
-$(function() {
+$(function () {
 
     var kaEndpoint = 'https://analytics.katalon.com';
 
-    var dialog = $( '#ka-select-project-dialog');
+    var dialog = $('#ka-select-project-dialog');
     dialog.dialog({
         autoOpen: false,
         resizable: false,
         height: 'auto',
         modal: true,
         buttons: {
-            Upload: function() {
+            Upload: function () {
 
                 // _gaq.push(['_trackEvent', 'app', 'upload_ka']);
 
@@ -1108,7 +1154,7 @@ $(function() {
                     data: {
                         projectId: projectId
                     },
-                    success: function(response) {
+                    success: function (response) {
                         var path = response.path;
                         var uploadUrl = response.uploadUrl;
 
@@ -1116,7 +1162,7 @@ $(function() {
                         var logcontext = '';
                         var logcontainer = document.getElementById('logcontainer');
                         for (var i = 0; i < logcontainer.childNodes.length; i++) {
-                            logcontext = logcontext + logcontainer.childNodes[i].textContent + '\n' ;
+                            logcontext = logcontext + logcontainer.childNodes[i].textContent + '\n';
                         }
 
                         $.ajax({
@@ -1124,7 +1170,7 @@ $(function() {
                             type: 'PUT',
                             contentType: 'text/plain',
                             data: logcontext,
-                            success: function() {
+                            success: function () {
                                 $.ajax({
                                     url: `${kaEndpoint}/api/v1/katalon-recorder/test-reports`,
                                     type: 'POST',
@@ -1135,50 +1181,50 @@ $(function() {
                                         fileName: 'KR-' + new Date().getTime() + '.log',
                                         uploadedPath: path
                                     },
-                                    success: function() {
+                                    success: function () {
                                         showDialog('Execution logs have been uploaded successfully.', true)
                                     },
-                                    error: function() {
+                                    error: function () {
                                         console.log(arguments);
                                         showErrorDialog();
                                     }
                                 });
                             },
-                            error: function() {
+                            error: function () {
                                 console.log(arguments);
                                 showErrorDialog();
                             }
                         });
                     },
-                    error: function() {
+                    error: function () {
                         console.log(arguments);
                         showErrorDialog();
                     }
                 })
             },
-            Cancel: function() {
+            Cancel: function () {
                 $(this).dialog('close');
             }
         }
     });
 
-    $('#ka-upload').on('click', function() {
+    $('#ka-upload').on('click', function () {
         $.ajax({
             url: `${kaEndpoint}/api/v1/projects`,
             type: 'GET',
             data: {
                 sort: 'name'
             },
-            success: function(data) {
+            success: function (data) {
                 var projects = data.content;
                 var select = $('#select-ka-project');
                 select.empty();
-                projects.forEach(function(project) {
+                projects.forEach(function (project) {
                     select.append($('<option/>').attr('value', project.id).text(project.name));
                 });
                 dialog.dialog('open');
             },
-            error: function(response) {
+            error: function (response) {
                 console.log(response);
                 showDialog('<img class="kto-light" style="max-width: 50%;" src="../../../katalon/images/branding/Katalon-TestOps-full-color-large-w.png" alt="Katalon TestOps" /><img class="kto-dark" style="max-width: 50%;" src="../../../katalon/images/branding/Katalon-TestOps-full-color-large.png" alt="Katalon TestOps" /><p>Please log in to <a target="_blank" href="https://analytics.katalon.com" class="testops-link">Katalon TestOps (beta)</a> first and try again.</p><p>You can register a completely free account at <a target="_blank" href="https://www.katalon.com" class="testops-link">katalon.com</a>.</p><p>Katalon TestOps helps you manage automation results as you test it manually and generate quality, performance and flakiness reports to improve your confidence in evaluating the test results. Katalon TestOps supports both <a target="_blank" href="https://www.katalon.com" class="testops-link">Katalon Studio</a> (one of the top 10 test automation solutions) and Katalon Recorder.</p><p style="margin-bottom: 0;"><a target="_blank" href="https://www.katalon.com/testops/" class="testops-link">Learn more</a> about Katalon TestOps (Beta).</p>', true);
             }
@@ -1245,16 +1291,16 @@ function addSampleDataToScreenshot() {
 
 
 // KAT-BEGIN handle event for help button click
-$(function() {
-    $('#help.sub_btn').on('click', function() {
-        $( "#helpDialog" ).dialog({
+$(function () {
+    $('#help.sub_btn').on('click', function () {
+        $("#helpDialog").dialog({
             autoOpen: false,
             modal: true,
             height: "auto",
             width: "584px",
             dialogClass: "help-dialog",
             draggable: false,
-            resize: function(event, ui) {
+            resize: function (event, ui) {
                 var size = ui.size;
                 var helpDialog = $('#helpDialog');
                 if (size.width <= 350) {
@@ -1263,20 +1309,20 @@ $(function() {
                     helpDialog.removeClass('small');
                 }
             },
-            open: function(event, ui) {
+            open: function (event, ui) {
                 $('.ui-widget-overlay').addClass("dim-overlay");
             },
-            close: function(event, ui) {
+            close: function (event, ui) {
                 $('#helpDialog').removeClass('small');
                 $('.ui-widget-overlay').removeClass("dim-overlay");
             }
         })
-        .parent()
-        .draggable();
+            .parent()
+            .draggable();
 
         $('#helpDialog').dialog("open");
 
-        $('#helpDialog-close').on("click", function() {
+        $('#helpDialog-close').on("click", function () {
             $('#helpDialog').dialog("close");
         });
     });
@@ -1313,9 +1359,9 @@ function expandForStoreEval(expression) {
     return variables + expression;
 }
 
-$(function() {
+$(function () {
 
-    chrome.storage.local.get('dataFiles', function(result) {
+    chrome.storage.local.get('dataFiles', function (result) {
         dataFiles = result.dataFiles;
         if (!dataFiles) {
             dataFiles = {};
@@ -1324,21 +1370,21 @@ $(function() {
     });
 
     var csvInput = $('#load-csv-hidden');
-    $('#data-files-add-csv').click(function() {
+    $('#data-files-add-csv').click(function () {
         csvInput.click();
     });
     var jsonInput = $('#load-json-hidden');
-    $('#data-files-add-json').click(function() {
+    $('#data-files-add-json').click(function () {
         jsonInput.click();
     });
-    document.getElementById("load-csv-hidden").addEventListener("change", function(event) {
+    document.getElementById("load-csv-hidden").addEventListener("change", function (event) {
         event.stopPropagation();
         for (var i = 0; i < this.files.length; i++) {
             readCsv(this.files[i]);
         }
         this.value = null;
     }, false);
-    document.getElementById("load-json-hidden").addEventListener("change", function(event) {
+    document.getElementById("load-json-hidden").addEventListener("change", function (event) {
         event.stopPropagation();
         for (var i = 0; i < this.files.length; i++) {
             readJson(this.files[i]);
@@ -1350,7 +1396,7 @@ $(function() {
 function readCsv(f) {
     var reader = new FileReader();
     reader.readAsText(f);
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         dataFiles[f.name] = {
             content: reader.result,
             type: 'csv'
@@ -1362,7 +1408,7 @@ function readCsv(f) {
 function readJson(f) {
     var reader = new FileReader();
     reader.readAsText(f);
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         dataFiles[f.name] = {
             content: reader.result,
             type: 'json'
@@ -1391,7 +1437,7 @@ function resetDataList() {
 
 function renderDataListItem(name) {
     var tr = $('<tr></tr>');
-    var tdType = $('<td></td>').text( function() {
+    var tdType = $('<td></td>').text(function () {
         var dataFile = dataFiles[name];
         if (!dataFile.data) {
             var type = dataFile.type;
@@ -1407,8 +1453,14 @@ function renderDataListItem(name) {
     });
     var tdName = $('<td></td>').text(name);
     var tdActions = $('<td></td>');
+    // # 改 searchButton 查看dataTable內容
+    var searchButton = $('<button class="search-button"></button>');
+    searchButton.on('click', function () {
+        var content = dataFiles[name].content;
+        alert(`${name}:\n`+content);
+    });
     var renameButton = $('<button class="rename-button"></button>');
-    renameButton.on('click', function() {
+    renameButton.on('click', function () {
         var newName = prompt('Please enter the new name for this data file.', name);
         if (newName.length > 0 && name !== newName) {
             dataFiles[newName] = dataFiles[name];
@@ -1417,13 +1469,13 @@ function renderDataListItem(name) {
         }
     });
     var deleteButton = $('<button class="delete-button"></button>');
-    deleteButton.on('click', function() {
+    deleteButton.on('click', function () {
         if (confirm('Do you want to remove this data file?')) {
             delete dataFiles[name];
             saveDataFiles();
         }
     });
-    tdActions.append(renameButton, deleteButton);
+    tdActions.append(searchButton, renameButton, deleteButton);
     tr.append(tdType, tdName, tdActions);
     return tr;
 }
@@ -1446,9 +1498,9 @@ function parseData(name) {
     return dataFile;
 }
 
-$(function() {
+$(function () {
 
-    chrome.storage.local.get('extensions', function(result) {
+    chrome.storage.local.get('extensions', function (result) {
         extensions = result.extensions;
         if (!extensions) {
             extensions = {};
@@ -1457,10 +1509,10 @@ $(function() {
     });
 
     var extensionInput = $('#load-extension-hidden');
-    $('#extension-add').click(function() {
+    $('#extension-add').click(function () {
         extensionInput.click();
     });
-    document.getElementById("load-extension-hidden").addEventListener("change", function(event) {
+    document.getElementById("load-extension-hidden").addEventListener("change", function (event) {
         event.stopPropagation();
         for (var i = 0; i < this.files.length; i++) {
             readExtension(this.files[i]);
@@ -1472,7 +1524,7 @@ $(function() {
 function readExtension(f) {
     var reader = new FileReader();
     reader.readAsText(f);
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         extensions[f.name] = {
             content: reader.result,
             type: 'Extension'
@@ -1505,7 +1557,7 @@ function renderExtensionsListItem(name) {
     var tdName = $('<td></td>').text(name);
     var tdActions = $('<td></td>');
     var renameButton = $('<button class="rename-button"></button>');
-    renameButton.on('click', function() {
+    renameButton.on('click', function () {
         var newName = prompt('Please enter the new name for this extension script.', name);
         if (newName.length > 0 && name !== newName) {
             extensions[newName] = extensions[name];
@@ -1514,7 +1566,7 @@ function renderExtensionsListItem(name) {
         }
     });
     var deleteButton = $('<button class="delete-button"></button>');
-    deleteButton.on('click', function() {
+    deleteButton.on('click', function () {
         if (confirm('Do you want to remove this extension script?')) {
             delete extensions[name];
             saveExtensions();

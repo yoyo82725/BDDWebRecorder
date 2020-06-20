@@ -1,3 +1,12 @@
+# BDDWebRecorder
+透過Chrome擴充功能安裝 (chrome://extensions/)
+載入未封裝項目
+
+API劫持需將 apitrack/BDDWebRecorder-sw.js 檔案放置專案根目錄
+
+基於Katalon Recorder
+感謝Katalon團隊與所有參與人的貢獻
+
 # Katalon Recorder
 
 ## How to add new formatter

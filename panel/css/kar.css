@@ -1,7 +1,7 @@
 @media (max-width: 767px) {
 	#logo_kr_full, #logo_kr_icon { display: none; }
 }
-@media (max-width: 1023px) {
+@media (max-width: 9999px) {
 	#logo_kr_full { display: none; }
 	#logo_kr_icon {
 		margin-right: 10px; 
@@ -20,7 +20,7 @@
 		max-width: 100%;
 	}
 }
-@media (min-width: 1024px) {
+/* @media (min-width: 1024px) {
 	#logo_kr_icon { display: none; }
 	#logo_kr_full {
 		margin-right: 10px; 
@@ -46,7 +46,7 @@
 		max-width: 100%;
 		display: none;
 	}
-}
+} */
 #katalon-logo img {
 	display: block;
     height: 26px;

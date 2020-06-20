@@ -297,6 +297,7 @@ function addTestCase(title, id) {
         p.parentNode.getElementsByTagName("strong")[0].classList.add("modified");
     }
 
+    // 左邊列 click 事件
     // attach event
     p.addEventListener("click", function(event) {
         event.stopPropagation();
@@ -309,6 +310,9 @@ function addTestCase(title, id) {
         if (sideex_testCase[this.id].records) {
             clean_panel();
             document.getElementById("records-grid").innerHTML = escapeHTML(sideex_testCase[this.id].records);
+            // # 改
+            reloadGherkinSelect();
+            switchDefaultView();
             if (getRecordsNum() !== '0') {
                 reAssignId("records-1", "records-" + getRecordsNum());
                 attachEvent(1, getRecordsNum());

@@ -134,7 +134,8 @@ function appendOpenCommandTarget(str) {
     return "<td>" + seleniumBase + str.substring(4, str.length-5) + "</td>";
 }
 
-function appendTestSuite(suiteFile, suiteResult) {
+// # 改
+function appendTestSuite(suiteFile, suiteResult, suite_gherkin, suite_gherkinFileName) {
     // append on test grid
     var id = "suite" + sideex_testSuite.count;
     sideex_testSuite.count++;
@@ -147,9 +148,13 @@ function appendTestSuite(suiteFile, suiteResult) {
 
     addTestSuite(suiteFileName, id);
     // name is used for download
+    // # 改
     sideex_testSuite[id] = {
         file_name: suiteFile.name,
-        title: suiteFileName
+        title: suiteFileName,
+        gherkin: suite_gherkin ? suite_gherkin : '',
+        gherkinAndLine: suite_gherkin ? addFileLine(suite_gherkin) : '',
+        gherkinFileName: suite_gherkinFileName ? suite_gherkinFileName : ''
     };
 
     test_case = suiteResult.match(/<table[\s\S]*?<\/table>/gi);

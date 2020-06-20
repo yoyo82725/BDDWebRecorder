@@ -1,14 +1,14 @@
 {
     "description": "Selenium IDE alternative to record and export Selenium scripts. With reports & screenshots. Fast & open-source.",
     "manifest_version": 2,
-    "name": "addon_name_placeholder",
-    "version": "4.0.0",
+    "name": "BDDWebRecorder",
+    "version": "1.0.0",
     "homepage_url":"https://www.katalon.com/",
     "icons":
     {
-        "16": "katalon/images/branding/branding_16.png",
-        "48": "katalon/images/branding/branding_48.png",
-       "128": "katalon/images/branding/branding_128.png"
+        "16": "icons/BDDWebRecorder-logo16.png",
+        "48": "icons/BDDWebRecorder-logo48.png",
+       "128": "icons/BDDWebRecorder-logo128.png"
     },
     "permissions": [
         "tabs",
@@ -63,7 +63,11 @@
         },
         {
             "matches": ["<all_urls>"],
-            "js": ["content/jquery.simulate.js"],
+            "js": [
+                "apitrack/jquery.min.js",
+                "apitrack/content.js",
+                "content/jquery.simulate.js"
+            ],
             "match_about_blank": true,
             "all_frames": true
         }
@@ -76,14 +80,15 @@
             "common/browser-polyfill.js",
             "background/background.js",
             "background/install.js",
-            "background/kar.js"
+            "background/kar.js",
+            "apitrack/background.js"
         ]
     },
 
     "browser_action":
     {
-        "default_icon": "katalon/images/branding/branding_16.png",
-        "default_title": "Katalon Recorder"
+        "default_icon": "icons/BDDWebRecorder-logo16.png",
+        "default_title": "BDDWebRecorder"
     },
 
     "web_accessible_resources": [

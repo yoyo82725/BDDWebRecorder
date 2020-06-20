@@ -24,7 +24,7 @@
 <head>
     <meta charset="utf-8" />
     <!-- TODO: Change the title bar text -->
-    <title>Katalon Recorder</title>
+    <title>BDDWebRecorder</title>
 
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700|Roboto:400,500,700" rel="stylesheet">
 
@@ -32,9 +32,13 @@
     <link rel="stylesheet" href="css/jquery-ui-slider-pips.css">
     <link rel="stylesheet" href="css/layout.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
 
     <link rel="stylesheet" href="js/katalon/codemirror-5.31.0/lib/codemirror.css">
-    <link rel="stylesheet" href="css/kar.css"/>
+    <link rel="stylesheet" href="css/jquery.loading.min.css">
+    <link rel="stylesheet" href="css/kar.css" />
+    <link rel="stylesheet" href="css/bdd.css" />
+    <link rel="stylesheet" href="../apitrack/vis.min.css" />
     <!-- to hide right button feature -->
     <!--[if lt IE 9]>
     <link rel="stylesheet" href="panel/css/ie.css" type="text/css" media="screen" />
@@ -42,6 +46,7 @@
     <![endif]-->
     <script type="text/javascript" src="js/lib/utils.js"></script>
     <script type="text/javascript" src="../common/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="js/lib/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/lib/jquery-ui.min.js"></script>
     <script type="text/javascript" src="js/lib/jquery-ui-slider-pips.js"></script>
     <script type="text/javascript" src="js/UI/hideshow.js"></script>
@@ -71,10 +76,12 @@
 <!-- TODO: Make whole panel size flexible -->
 
 <body>
+    <script src="js/lib/jquery.loading.min.js"></script>
+    <script src="js/UI/runLoading.js"></script>
     <header id="header">
         <hgroup>
-            <img class="logo_img" src="../icons/logo.png"></img>
-            <a href="#"><img id="help" class="toolBar_img" src="../icons/help.png"></img></a>
+            <img class="logo_img" src="../icons/logo.png">
+            <a href="#"><img id="help" class="toolBar_img" src="../icons/help.png"></a>
         </hgroup>
     </header>
     <!-- end of header bar -->
@@ -98,9 +105,10 @@
     <section id="main" class="column">
         <div id="toolbar-container" class="submit_link">
             <!-- hidden, because it has default style -->
-            <input id="load-testSuite-hidden" type="file" multiple accept="text/*" style="display: none"></input>
+            <input id="load-gherkin-file-hidden" type="file" multiple accept=".feature" style="display: none">
+            <input id="load-testSuite-hidden" type="file" multiple accept="text/*" style="display: none">
             <input id="load-older-testSuite" type="file" multiple accept="text/*" style="display: none">
-            <input id="load-testSuite-show" type="button" value="OpenSuite" style="display: none"></input>
+            <input id="load-testSuite-show" type="button" value="OpenSuite" style="display: none">
             <button id="save-testSuite" style="display: none">SaveSuite</button>
             <button id="close-testSuite" style="display: none">CloseSuite</button>
             <button id="close-all-testSuites" style="display: none">CloseAllSuites</button>
@@ -108,14 +116,14 @@
             <button id="add-testCase" style="display: none">+Case</button>
             <button id="delete-testCase" style="display: none">-Case</button>
             <a download="info.html" id="downloadlink" style="display: none">Download</a>
-            
-            <a name="" target="_blank" id="logo_kr_icon" class="sub_btn"><img src="../katalon/images/branding/branding_128.png" alt="Katalon Recorder" /></button>
-            <a name="" target="_blank" id="logo_kr_full" class="sub_btn">
+
+            <a name="" href="https://www.katalon.com/" target="_blank" id="logo_kr_icon" class="sub_btn"><img src="../icons/BDDWebRecorder-logo128.png" alt="Katalon Recorder" /></a>
+            <a name="" href="https://www.katalon.com/" target="_blank" id="logo_kr_full" class="sub_btn">
                 <img class="dark" src="../katalon/images/branding/Katalon-Recorder-full-color-large.png" alt="Katalon Recorder" />
                 <img class="light" src="../katalon/images/branding/Katalon-Recorder-full-color-large-w.png" alt="Katalon Recorder" />
             </a>
-            
-            <button id="new" class="sub_btn"><i class="fa"></i> New</button>
+
+            <button id="new" class="sub_btn"><i class="fa"></i> New Test Case</button>
             <button id="record" class="sub_btn" style="width: 15%"><i class="fa fa-video-camera" aria-hidden="true"></i> Record</button>
             <button id="playback" class="sub_btn" style="width: 20%" disabled><i class="fa fa-play" aria-hidden="true"></i> Play</button>
             <button id="stop" class="sub_btn" style="display: none; width: 20%"><i class="fa fa-stop" aria-hidden="true"></i> Stop</button>
@@ -132,7 +140,7 @@
             <a id="help" class="sub_btn"><i class="fa"></i></a>
             <a id="github" class="sub_btn" target="_blank" href="https://github.com/katalon-studio/katalon-recorder"><i class="fa fa-github"></i></a>
             <!--a id="adjust" class="sub_btn"><i class="fa fa-adjust" aria-hidden="true"></i></a-->
-            <a href="https://www.katalon.com/" target="_blank" id="katalon-logo" class="sub_btn" title="Visit katalon.com"><img src="../katalon/images/SVG/katalon-logo-vector.svg" alt="Katalon Logo Icon" /></a>
+            <!-- <a href="https://www.katalon.com/" target="_blank" id="katalon-logo" class="sub_btn" title="Visit katalon.com"><img src="../katalon/images/SVG/katalon-logo-vector.svg" alt="Katalon Logo Icon" /></a> -->
             <!-- TODO: Add a stop button -->
         </div>
         <!-- load Suite of older version -->
@@ -179,9 +187,12 @@
                         <table id="command-grid" class="tablesorter" cellspacing="0">
                             <thead class="fixed">
                                 <tr>
-                                    <th style="width: 23%">Command<div class="border"></div></th>
-                                    <th style="width: 40%">Target<div class="border"></div></th>
-                                    <th style="width: 37%">Value</th>
+                                    <th style="width: 23%">Command<div class="border"></div>
+                                    </th>
+                                    <th style="width: 30%">Target<div class="border"></div>
+                                    </th>
+                                    <th style="width: 24%">Value</th>
+                                    <th style="width: 23%">Gherkin</th>
                                 </tr>
                             </thead>
                             <tbody id="records-grid">
@@ -253,6 +264,7 @@
                         </table>
                         <div class="record-bottom"></div>
                     </div>
+                    <div id="gherkinfile-view"></div>
                 </div>
                 <div id="command-toolbar">
                     <div id="command-toolbar-buttons">
@@ -260,6 +272,10 @@
                         <button id="grid-delete-btn"></button>
                         <button id="grid-copy-btn"></button>
                         <button id="grid-paste-btn"></button>
+                        <div class="float-right">
+                            <button id="grid-gherkin-addfile-btn">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+                            <button id="grid-view-gherkinfile-btn">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+                        </div>
                     </div>
                     <div class="fieldset">
                         <!-- TODO: make (command &) target selectable -->
@@ -285,6 +301,21 @@
                             <label>Value</label>
                             <input id="command-value" type="text">
                         </div>
+                        <div class="command-row">
+                            <label>Gherkin</label>
+                            <select name="gherkin" id="command-gherkin">
+                                <option value=""></option>
+                                <!-- <option value="When the Maker starts a game">When the Maker starts a game</option>
+                                <option value="Then the Maker waits for a Breaker to join">Then the Maker waits for a
+                                    Breaker to join</option>
+                                <option value='Given the Maker has started a game with the word "silky"'>Given the Maker
+                                    has started a game with the word "silky"</option>
+                                <option value="When the Breaker joins the Maker' s game">When the Breaker joins the
+                                    Maker's game</option>
+                                <option value="Then the Breaker must guess a word with 5 characters">When the Breaker
+                                    joins the Maker's game</option> -->
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <!-- end of #command-container -->
@@ -294,23 +325,24 @@
             <article class="module width_full">
                 <header class="tabs_involved">
                     <ul class="tabs2">
-                    <li id="history-log"><a>Log</a></li>
-                    <li id="screenshot"><a>Screenshots</a></li>
-                    <li id="variable-log"><a>Variables</a></li>
-                    <li id="data-files"><a>Data Driven</a></li>
-                    <li id="extensions"><a>Extension Scripts</a></li>
-                    <li id="reference-log"><a>Reference</a></li>
+                        <li id="history-log"><a>Log</a></li>
+                        <li id="screenshot"><a>Screenshots</a></li>
+                        <li id="variable-log"><a>Variables</a></li>
+                        <li id="data-files"><a>Data Driven</a></li>
+                        <li id="extensions"><a>Extension Scripts</a></li>
+                        <li id="reference-log"><a>Reference</a></li>
+                        <li id="reports"><a>Reports</a></li>
                     </ul>
                     <ul class="tabs">
-                        <li id="ka-upload"><a title="Upload logs to Katalon TestOps to keep track of execution history, access to automation dashboard and reports."><img src="../katalon/images/branding/ka_32x24px.png" alt="Katalon TestOps"/> Katalon TestOps<sup>beta</sup></a></li>
+                        <!-- <li id="ka-upload"><a title="Upload logs to Katalon TestOps to keep track of execution history, access to automation dashboard and reports."><img src="../katalon/images/branding/ka_32x24px.png" alt="Katalon TestOps"/> Katalon TestOps<sup>beta</sup></a></li> -->
                         <li id="save-log"><a title="Save logs as...">Save</a></li>
                         <li id="clear-log"><a title="Clear logs">Clear</a></li>
                         <li id="data-files-add-csv"><a title="Add CSV File">Add CSV File</a></li>
                         <li id="data-files-add-json"><a title="Add JSON File">Add JSON File</a></li>
                         <li id="extension-add"><a title="Add JS File">Add Extension Script</a></li>
                         <li id="collapse-console"><a href="javascript:void(0);" title="Toggle panel" id="show-hide-bottom-panel">
-                            <img src="/katalon/images/SVG/ic_keyboard_arrow_down_black_18px.svg" data-show="/katalon/images/SVG/ic_keyboard_arrow_up_black_18px.svg" data-hide="/katalon/images/SVG/ic_keyboard_arrow_down_black_18px.svg" alt="Show/Hide">
-                        </a></li>
+                                <img src="/katalon/images/SVG/ic_keyboard_arrow_down_black_18px.svg" data-show="/katalon/images/SVG/ic_keyboard_arrow_up_black_18px.svg" data-hide="/katalon/images/SVG/ic_keyboard_arrow_down_black_18px.svg" alt="Show/Hide">
+                            </a></li>
                     </ul>
                 </header>
                 <div id="tab4" class="tab_content case_roll">
@@ -386,6 +418,115 @@
                             </table>
                         </div>
                         <div id="refercontainer">
+                        </div>
+                        <div id="reportscontainer">
+                            <!-- report here -->
+                            <!-- part 1 table -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card bg-light">
+                                        <div class="card-header text-center">Test Summary Report</div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table-hover table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="fit-content-column">Status</th>
+                                                            <th class="">Name</th>
+                                                            <th class="">Started</th>
+                                                            <th class="">Duration</th>
+                                                            <th class="">Result</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="p1Tbody"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- part 1 table END -->
+                            <!-- part 2 BDD -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card bg-light">
+                                        <div class="card-header text-center">BDD Test Report</div>
+                                        <div class="card-body">
+                                            <div id="gherkin_report"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- part 2 BDD END -->
+                            <!-- part 2.5 BDD URL CALL -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card bg-light">
+                                        <div class="card-header text-center">BDD/API-Call Mapping</div>
+                                        <div class="card-body">
+                                            <div id="gherkinUrlCall_report">
+                                                <div id="gherkinUrlCall_tableContainer" class="module_content file-container table-responsive">
+                                                    <!-- <table>
+                                                            <colgroup>
+                                                                <col width="50%">
+                                                                <col width="50%">
+                                                            </colgroup>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Name</th>
+                                                                    <th>Time</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>8| Given 使用者在首頁</td>
+                                                                    <td>1589354094774</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table> -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- part 2.5 BDD URL CALL END -->
+                            <!-- part 3 API調用報告 Calls -->
+                            <div id="api_report">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card bg-light">
+                                            <div class="card-header text-center">API State Transition</div>
+                                            <div class="card-body">
+                                                <div id="status"></div>
+                                                <div id="vis"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <!-- API CALL PATH -->
+                                        <div id="graph_data" class="grid">
+                                            <!-- <div class="card bg-light block">
+                                                <div class="card-header">
+                                                    API Call Path
+                                                </div>
+                                                <div class="card-body route0_body"></div>
+                                            </div> -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 第三部分 API調用報告 END -->
+                            <div class="text-center button-group" style="padding:20px 0 25px 0;">
+                                <!-- <button type="button" id="newStorage" class="btn btn-primary">新紀錄</button> -->
+                                <!-- <button type="button" id="saveStorage" class="btn btn-primary">儲存</button> -->
+                                <button type="button" id="saveAs" class="btn btn-primary">Save As ...</button>
+                                <button type="button" id="saveToGit" class="btn btn-primary">Save To Git</button>
+                                <!-- <button type="button" id="loadStorage" class="btn btn-primary">載入...</button> -->
+                                <button type="button" id="clearStorage" class="btn btn-primary">Clear All</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -465,10 +606,15 @@
     <script src="js/background/editor.js"></script>
     <script src="js/background/formatCommand.js"></script>
     <script src="js/background/playback.js"></script>
-
     <script src="js/katalon/kar.js"></script>
+
+    <script src="js/bdd/bdd.js"></script>
+    <script src="../apitrack/vis.min.js"></script>
+    <script src="../apitrack/sweetalert2.all.min.js"></script>
+    <script src="../apitrack/apiCallPath.js"></script>
     <script type="text/javascript" src="js/katalon/newformatters/sample.js"></script>
     <script type="text/javascript" src="js/katalon/newformatters/nrsynthetics.js"></script>
     <script type="text/javascript" src="js/katalon/newformatters/protractorts.js"></script>
 </body>
+
 </html>

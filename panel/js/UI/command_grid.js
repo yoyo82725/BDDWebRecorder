@@ -53,6 +53,14 @@ function getCommandValue(tr, for_show) {
     return getTdRealValueNode(tr, 2).textContent;
 }
 
+// # 改
+function getCommandGherkin(tr, for_show) {
+    if (for_show) {
+        return getTdShowValueNode(tr, 3).textContent;
+    }
+    return getTdRealValueNode(tr, 3).textContent;
+}
+
 function getRecordsNum() {
     return document.getElementById("records-count").value;
 }
@@ -168,7 +176,8 @@ function attachEvent(start, end) {
 
         // sometimes target will be <td> or <tr>        
         // click
-        node.addEventListener("click", function(event) {
+        // 點擊右上tab
+        node.addEventListener("click", function (event) {
             // use jquery's API to add and remove class property
             if (firstSelectedTrId == undefined && $(".selectedRecord").length>0) {
                 firstSelectedTrId = parseInt($(".selectedRecord")[0].id.substring(8));
@@ -219,6 +228,8 @@ function attachEvent(start, end) {
             assignChildNodes(document.getElementById("target-dropdown"), targetList, false);
             assignChildNodes(document.getElementById("command-target-list"), ref.getElementsByTagName("td")[1].getElementsByTagName("datalist")[0], true, true);
             document.getElementById("command-value").value = getCommandValue(ref);
+            // # 改
+            document.getElementById("command-gherkin").value = getCommandGherkin(ref);
         }, false);
 
         // right click
@@ -245,6 +256,8 @@ function attachEvent(start, end) {
             assignChildNodes(document.getElementById("target-dropdown"), targetList, false);
             assignChildNodes(document.getElementById("command-target-list"), ref.getElementsByTagName("td")[1].getElementsByTagName("datalist")[0], true, true);
             document.getElementById("command-value").value = getCommandValue(ref);
+            // # 改
+            document.getElementById("command-gherkin").value = getCommandGherkin(ref);
         }, false);
     }
 }
@@ -304,8 +317,9 @@ function addCommand(command_name, command_target_array, command_value, auto, ins
     new_record.setAttribute("class", "");
     new_record.setAttribute("style", "");
 
+    // # 改
     // create td node
-    for (var i = 0; i < 3; ++i) {
+    for (var i = 0; i < 4; ++i) {
         var td = document.createElement("td");
         var div_show = document.createElement("div");
         var div_hidden = document.createElement("div");
@@ -317,7 +331,7 @@ function addCommand(command_name, command_target_array, command_value, auto, ins
         } else if (i == 1) {
             // use textNode to avoid tac's tag problem (textNode's content will be pure text, does not be parsed as html)
             div_hidden.appendChild(document.createTextNode(command_target_array[0][0]));
-        } else {
+        } else if (i == 2) {
             div_hidden.appendChild(document.createTextNode(command_value));
         }
         td.appendChild(div_hidden);

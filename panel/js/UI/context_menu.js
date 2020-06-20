@@ -129,6 +129,8 @@ document.getElementById("command-container").addEventListener("click", function(
     document.getElementById("command-command").blur();
     document.getElementById("command-target").blur();
     document.getElementById("command-value").blur();
+    // # 改
+    document.getElementById("command-gherkin").blur();
 });
 
 // let hot key (Ctrl + C/V) only enable on command container

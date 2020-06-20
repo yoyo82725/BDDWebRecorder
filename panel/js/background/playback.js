@@ -44,7 +44,7 @@ var caseFailed = false;
 var extCommand = new ExtCommand();
 
 // TODO: move to another file
-window.onload = function() {
+window.onload = function () {
     var recordButton = document.getElementById("record");
     var playButton = document.getElementById("playback");
     var stopButton = document.getElementById("stop");
@@ -59,14 +59,14 @@ window.onload = function() {
     /*var recordButton = document.getElementById("record");*/
     //element.addEventListener("click",play);
     //Tim
-    var referContainer=document.getElementById("refercontainer");
-    var logContainer=document.getElementById("logcontainer");
-    var saveLogButton=document.getElementById("save-log");
+    var referContainer = document.getElementById("refercontainer");
+    var logContainer = document.getElementById("logcontainer");
+    var saveLogButton = document.getElementById("save-log");
 
 
-    saveLogButton.addEventListener("click",savelog);
-    referContainer.style.display="none";
-    $('#command-command').on('input change', function() {
+    saveLogButton.addEventListener("click", savelog);
+    referContainer.style.display = "none";
+    $('#command-command').on('input change', function () {
         scrape(document.getElementById("command-command").value);
     });
 
@@ -75,10 +75,10 @@ window.onload = function() {
     suiteOpen.addEventListener("mouseover", mouseOnSuiteTitleIcon);
     suiteOpen.addEventListener("mouseout", mouseOutSuiteTitleIcon);
 
-    var logLi=document.getElementById("history-log");
-    var referenceLi=document.getElementById("reference-log");
-    var logState=true;
-    var referenceState=false;
+    var logLi = document.getElementById("history-log");
+    var referenceLi = document.getElementById("reference-log");
+    var logState = true;
+    var referenceState = false;
     /* KAT-BEGIN remove Sideex styling and event handler for log/reference
     referenceLi.firstChild.style.color="#818181";
     logLi.addEventListener("mouseover",function(){
@@ -127,7 +127,7 @@ window.onload = function() {
     })
     KAT-END */
 
-    recordButton.addEventListener("click", function(){
+    recordButton.addEventListener("click", function () {
 
         // _gaq.push(['_trackEvent', 'app', 'record']);
 
@@ -137,15 +137,15 @@ window.onload = function() {
             notificationCount = 0;
             // KAT-BEGIN focus on window when recording
             if (contentWindowId) {
-                browser.windows.update(contentWindowId, {focused: true});
+                browser.windows.update(contentWindowId, { focused: true });
             }
             // KAT-END
-            browser.tabs.query({windowId: extCommand.getContentWindowId(), url: "<all_urls>"})
-            .then(function(tabs) {
-                for(let tab of tabs) {
-                    browser.tabs.sendMessage(tab.id, {attachRecorder: true});
-                }
-            });
+            browser.tabs.query({ windowId: extCommand.getContentWindowId(), url: "<all_urls>" })
+                .then(function (tabs) {
+                    for (let tab of tabs) {
+                        browser.tabs.sendMessage(tab.id, { attachRecorder: true });
+                    }
+                });
             // KAT-BEGIN add space for record button label
             recordButton.childNodes[1].textContent = " Stop";
             switchRecordButton(false);
@@ -153,20 +153,28 @@ window.onload = function() {
         }
         else {
             recorder.detach();
-            browser.tabs.query({windowId: extCommand.getContentWindowId(), url: "<all_urls>"})
-            .then(function(tabs) {
-                for(let tab of tabs) {
-                    browser.tabs.sendMessage(tab.id, {detachRecorder: true});
-                }
-            });
+            browser.tabs.query({ windowId: extCommand.getContentWindowId(), url: "<all_urls>" })
+                .then(function (tabs) {
+                    for (let tab of tabs) {
+                        browser.tabs.sendMessage(tab.id, { detachRecorder: true });
+                    }
+                });
             // KAT-BEGIN add space for record button label
             recordButton.childNodes[1].textContent = " Record";
             switchRecordButton(true);
             // KAT-END
         }
     })
-    playButton.addEventListener("click", function() {
+    // play 按鈕
+    playButton.addEventListener("click", function () {
         saveData();
+
+        // # 改 檢測Gherkin順序
+        if (!checkGherkinOrder()) {
+            alert('Please Check the Gherkin Order!');
+            return false;
+        }
+
         emptyNode(document.getElementById("logcontainer"));
         document.getElementById("result-runs").textContent = "0";
         document.getElementById("result-failures").textContent = "0";
@@ -175,7 +183,7 @@ window.onload = function() {
         setCaseScrollTop(getSelectedCase());
         // KAT-BEGIN focus on window when playing test case
         if (contentWindowId) {
-            browser.windows.update(contentWindowId, {focused: true});
+            browser.windows.update(contentWindowId, { focused: true });
         }
         declaredVars = {};
         clearScreenshotContainer();
@@ -186,15 +194,30 @@ window.onload = function() {
         var s_case = getSelectedCase();
         sideex_log.info("Playing test case " + sideex_testSuite[s_suite.id].title + " / " + sideex_testCase[s_case.id].title);
         logStartTime();
+        // # 改
+        reportData.p1Data[reportData.nowReportIdx].startTime = new Date().toLocaleString();
+        reportData.tmpStartTime = +new Date();
+        cleanReportP2(); // 清空BDD Report
+        cleanReportP3(); // 清空vis network
         play();
     });
-    stopButton.addEventListener("click", function() {
+    stopButton.addEventListener("click", function () {
         stop();
     });
     pauseButton.addEventListener("click", pause);
     resumeButton.addEventListener("click", resume);
-    playSuiteButton.addEventListener("click", function() {
+    // play suite 按鈕
+    playSuiteButton.addEventListener("click", function () {
         saveData();
+
+        // # 改 檢測Gherkin順序
+        if (!checkGherkinOrder()) {
+            alert('Please Check the Gherkin Order!');
+            return false;
+        }
+        cleanReportP2(); // 清空BDD Report
+        cleanReportP3(); // 清空vis network
+
         emptyNode(document.getElementById("logcontainer"));
         document.getElementById("result-runs").textContent = "0";
         document.getElementById("result-failures").textContent = "0";
@@ -202,15 +225,25 @@ window.onload = function() {
         initAllSuite();
         // KAT-BEGIN focus on window when playing test suite
         if (contentWindowId) {
-            browser.windows.update(contentWindowId, {focused: true});
+            browser.windows.update(contentWindowId, { focused: true });
         }
         declaredVars = {};
         clearScreenshotContainer();
         // KAT-END
         playSuite(0);
     });
-    playSuitesButton.addEventListener("click", function() {
+    // play all按鈕
+    playSuitesButton.addEventListener("click", function () {
         saveData();
+
+        // # 改 檢測Gherkin順序
+        if (!checkGherkinOrder()) {
+            alert('Please Check the Gherkin Order!');
+            return false;
+        }
+        cleanReportP2(); // 清空BDD Report
+        cleanReportP3(); // 清空vis network
+
         emptyNode(document.getElementById("logcontainer"));
         document.getElementById("result-runs").textContent = "0";
         document.getElementById("result-failures").textContent = "0";
@@ -218,14 +251,14 @@ window.onload = function() {
         initAllSuite();
         // KAT-BEGIN focus on window when playing test suite
         if (contentWindowId) {
-            browser.windows.update(contentWindowId, {focused: true});
+            browser.windows.update(contentWindowId, { focused: true });
         }
         declaredVars = {};
         clearScreenshotContainer();
         // KAT-END
         playSuites(0);
     });
-    selectElementButton.addEventListener("click",function(){
+    selectElementButton.addEventListener("click", function () {
         var button = document.getElementById("selectElementButton");
         if (isSelecting) {
             isSelecting = false;
@@ -236,9 +269,9 @@ window.onload = function() {
             browser.tabs.query({
                 active: true,
                 windowId: contentWindowId
-            }).then(function(tabs) {
-                browser.tabs.sendMessage(tabs[0].id, {selectMode: true, selecting: false});
-            }).catch(function(reason) {
+            }).then(function (tabs) {
+                browser.tabs.sendMessage(tabs[0].id, { selectMode: true, selecting: false });
+            }).catch(function (reason) {
                 console.log(reason);
             })
             return;
@@ -254,7 +287,7 @@ window.onload = function() {
         browser.tabs.query({
             active: true,
             windowId: contentWindowId
-        }).then(function(tabs) {
+        }).then(function (tabs) {
             if (tabs.length === 0) {
                 console.log("No match tabs");
                 isSelecting = false;
@@ -263,11 +296,11 @@ window.onload = function() {
                 button.classList.remove("active");
                 // KAT-END
             } else
-                browser.tabs.sendMessage(tabs[0].id, {selectMode: true, selecting: true});
+                browser.tabs.sendMessage(tabs[0].id, { selectMode: true, selecting: true });
         })
     });
-    showElementButton.addEventListener("click", function(){
-        try{
+    showElementButton.addEventListener("click", function () {
+        try {
             var targetValue = document.getElementById("command-target").value;
             if (targetValue == "auto-located-by-tac") {
                 targetValue = document.getElementById("command-target-list").options[0].text;
@@ -275,12 +308,12 @@ window.onload = function() {
             browser.tabs.query({
                 active: true,
                 windowId: contentWindowId
-            }).then(function(tabs) {
+            }).then(function (tabs) {
                 if (tabs.length === 0) {
                     console.log("No match tabs");
                 } else {
-                    browser.webNavigation.getAllFrames({tabId: tabs[0].id})
-                        .then(function(framesInfo){
+                    browser.webNavigation.getAllFrames({ tabId: tabs[0].id })
+                        .then(function (framesInfo) {
                             var frameIds = [];
                             for (let i = 0; i < framesInfo.length; i++) {
                                 frameIds.push(framesInfo[i].frameId)
@@ -316,8 +349,8 @@ function sendShowElementMessage(infos) {
         targetValue: infos.targetValue
     }, {
         frameId: infos.frameIds[infos.index]
-    }).then(function(response) {
-        if (response){
+    }).then(function (response) {
+        if (response) {
             if (!response.result) {
                 prepareSendNextFrame(infos);
             } else {
@@ -325,8 +358,8 @@ function sendShowElementMessage(infos) {
                 sideex_log.info("Element is found in " + text + " frame.");
             }
         }
-    }).catch(function(error) {
-        if(error.message == "Could not establish connection. Receiving end does not exist.") {
+    }).catch(function (error) {
+        if (error.message == "Could not establish connection. Receiving end does not exist.") {
             prepareSendNextFrame(infos);
         } else {
             sideex_log.error("Unknown error");
@@ -360,10 +393,11 @@ function cleanCommandToolBar() {
     $("#command-command").val("");
     $("#command-target").val("");
     $("#command-value").val("");
+    $("#command-gherkin").val("");
 }
 
 function play() {
-
+    
     // _gaq.push(['_trackEvent', 'app', 'play']);
 
     addSampleDataToScreenshot();
@@ -375,13 +409,16 @@ function play() {
 
 function stop() {
 
-    if (isPause){
+    if (isPause) {
         isPause = false;
         switchPR();
     }
     isPlaying = false;
     isPlayingSuite = false;
     isPlayingAll = false;
+    // # 改
+    apiLogOff();
+
     switchPS();
     sideex_log.info("Stop executing");
     initAllSuite();
@@ -404,6 +441,8 @@ function initializeAfterConnectionFailed() {
 
     isRecording = false;
     isPlaying = true;
+    // # 改
+    apiLogOn();
 
     commandType = "preparation";
     pageCount = ajaxCount = domCount = implicitCount = 0;
@@ -422,6 +461,8 @@ function pause() {
         sideex_log.info("Pausing");
         isPause = true;
         isPlaying = false;
+        // # 改
+        apiLogOff();
         // No need to detach
         // prevent from missing status info
         //extCommand.detach();
@@ -430,11 +471,14 @@ function pause() {
 }
 
 function resume() {
-    if(currentTestCaseId!=getSelectedCase().id)
+    if (currentTestCaseId != getSelectedCase().id)
         setSelectedCase(currentTestCaseId);
     if (isPause) {
         sideex_log.info("Resuming");
         isPlaying = true;
+        // # 改
+        apiLogOn();
+
         isPause = false;
         extCommand.attach();
         switchPR();
@@ -459,6 +503,9 @@ function initAllSuite() {
 
 function playSuite(i) {
     isPlayingSuite = true;
+    // # 改
+    apiLogOn();
+    
     var cases = getSelectedSuite().getElementsByTagName("p");
     var length = cases.length;
     /* KAT-BEGIN remove log
@@ -471,23 +518,32 @@ function playSuite(i) {
         setCaseScrollTop(getSelectedCase());
         sideex_log.info("Playing test case " + sideex_testSuite[getSelectedSuite().id].title + " / " + sideex_testCase[cases[i].id].title);
         logStartTime();
+        // # 改
+        reportData.p1Data[reportData.nowReportIdx].startTime = new Date().toLocaleString();
+        reportData.tmpStartTime = +new Date();
         play();
         nextCase(i);
     } else {
         isPlayingSuite = false;
+        // # 改
+        apiLogOff();
+        
         switchPS();
     }
 }
 
 function nextCase(i) {
-    if (isPlaying || isPause) setTimeout(function() {
+    if (isPlaying || isPause) setTimeout(function () {
         nextCase(i);
     }, 500);
-    else if(isPlayingSuite) playSuite(i + 1);
+    else if (isPlayingSuite) playSuite(i + 1);
 }
 
 function playSuites(i) {
     isPlayingAll = true;
+    // # 改
+    apiLogOn();
+
     var suites = document.getElementById("testCase-grid").getElementsByClassName("message");
     var length = suites.length;
     if (i < length) {
@@ -498,15 +554,18 @@ function playSuites(i) {
         nextSuite(i);
     } else {
         isPlayingAll = false;
+        // # 改
+        apiLogOff();
+        
         switchPS();
     }
 }
 
 function nextSuite(i) {
-    if (isPlayingSuite) setTimeout(function() {
+    if (isPlayingSuite) setTimeout(function () {
         nextSuite(i);
     }, 2000);
-    else if(isPlayingAll) playSuites(i + 1);
+    else if (isPlayingAll) playSuites(i + 1);
 }
 
 function executeCommand(index) {
@@ -529,10 +588,10 @@ function executeCommand(index) {
     setColor(id + 1, "executing");
 
     browser.tabs.query({
-            windowId: extCommand.getContentWindowId(),
-            active: true
-        })
-        .then(function(tabs) {
+        windowId: extCommand.getContentWindowId(),
+        active: true
+    })
+        .then(function (tabs) {
             return browser.tabs.sendMessage(tabs[0].id, {
                 commands: commandName,
                 target: commandTarget,
@@ -541,15 +600,27 @@ function executeCommand(index) {
                 frameId: extCommand.getFrameId(tabs[0].id)
             })
         })
-        .then(function(result) {
+        .then(function (result) {
             if (result.result != "success") {
                 sideex_log.error(result.result);
                 setColor(id + 1, "fail");
+                // # 改 test case 執行失敗
+                let commandGherkin = commands[currentPlayingCommandIndex] && getCommandGherkin(commands[currentPlayingCommandIndex]);
+                if (commandGherkin) {
+                    reportData.failedGherkin.push(commandGherkin);
+                    findAndRemove(reportData.passedGherkin, commandGherkin); // 從passed移除
+                }
                 if (!result.result.includes("did not match")) {
                     return true;
                 }
             } else {
                 setColor(id + 1, "success");
+                // # 改 test case 執行成功
+                let commandGherkin = commands[currentPlayingCommandIndex] && getCommandGherkin(commands[currentPlayingCommandIndex]);
+                if (commandGherkin) {
+                    reportData.passedGherkin.push(commandGherkin);
+                    findAndRemove(reportData.failedGherkin, commandGherkin); // 從failed移除
+                }
             }
         })
 
@@ -573,6 +644,8 @@ function initializePlayingProgress(isDbclick) {
 
     isRecording = false;
     isPlaying = true;
+    // # 改
+    apiLogOn();
 
     switchPS();
 
@@ -602,14 +675,29 @@ function executionLoop() {
     handleDisplayVariables();
 
     if (currentPlayingCommandIndex + 1 >= commands.length) {
-        if (!caseFailed) {
-             setColor(currentTestCaseId, "success");
+        // # 改 fail後跳success
+        if (!caseFailed && reportData.p1Data[reportData.nowReportIdx].startTime) {
+            setColor(currentTestCaseId, "success");
+            // # 改 test case 執行成功
+            let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
+            if (commandGherkin) {
+                reportData.passedGherkin.push(commandGherkin);
+                findAndRemove(reportData.failedGherkin, commandGherkin); // 從failed移除
+            }
             // KAT-BEGIN
             // document.getElementById("result-runs").textContent = parseInt(document.getElementById("result-runs").textContent) + 1;
             // declaredVars = {};
             // KAT-END
             logEndTime();
             sideex_log.info("Test case passed");
+            // # 改
+            reportData.p1Data[reportData.nowReportIdx].status = true;
+            reportData.p1Data[reportData.nowReportIdx].name = sideex_testCase[currentTestCaseId].title;
+            reportData.p1Data[reportData.nowReportIdx].duration = +new Date() - reportData.tmpStartTime;
+            reportData.p1Data[reportData.nowReportIdx].show = true;
+            reportData.nowReportIdx++;
+            reportData.p1Data.push(clone(reportData.rawData, true));
+            renderReport();
         } else {
             caseFailed = false;
         }
@@ -642,6 +730,18 @@ function executionLoop() {
     let commandName = getCommandName(commands[currentPlayingCommandIndex]);
     let commandTarget = getCommandTarget(commands[currentPlayingCommandIndex]);
     let commandValue = getCommandValue(commands[currentPlayingCommandIndex]);
+    // # 改
+    let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
+    if(commandGherkin) {
+        // 儲存時間對應
+        timeUrlGherkinMap.push({
+            url: undefined,
+            type: undefined,
+            method: undefined,
+            gherkin: commandGherkin,
+            time: +new Date()
+        });
+    }
 
     if (commandName == "") {
         return Promise.reject("no command name");
@@ -656,26 +756,32 @@ function executionLoop() {
             let upperCase = commandName.charAt(0).toUpperCase() + commandName.slice(1);
             commandTarget = convertVariableToString(commandTarget);
             return (extCommand["do" + upperCase](commandTarget, commandValue))
-               .then(function() {
+                .then(function () {
                     setColor(currentPlayingCommandIndex + 1, "success");
-               }).then(executionLoop);
+                    // # 改 test case 執行成功
+                    let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
+                    if (commandGherkin) {
+                        reportData.passedGherkin.push(commandGherkin);
+                        findAndRemove(reportData.failedGherkin, commandGherkin); // 從failed移除
+                    }
+                }).then(executionLoop);
         } else {
             return doPreparation()
-               .then(doPrePageWait)
-               .then(doPageWait)
-               .then(doAjaxWait)
-               .then(doDomWait)
-               .then(doCommand)
-               .then(executionLoop)
+                .then(doPrePageWait)
+                .then(doPageWait)
+                .then(doAjaxWait)
+                .then(doDomWait)
+                .then(doCommand)
+                .then(executionLoop)
         }
     });
 }
 
 function delay(t) {
-    return new Promise(function(resolve) {
+    return new Promise(function (resolve) {
         setTimeout(resolve, t)
     });
- }
+}
 
 function finalizePlayingProgress() {
     if (!isPause) {
@@ -683,13 +789,16 @@ function finalizePlayingProgress() {
         extCommand.clear();
     }
     //console.log("success");
-    setTimeout(function() {
+    setTimeout(function () {
         isPlaying = false;
+        // # 改
+        apiLogOff();
+        
         switchPS();
     }, 500);
 }
 
-document.addEventListener("dblclick", function(event) {
+document.addEventListener("dblclick", function (event) {
     var temp = event.target;
     cleanCommandToolBar();
     while (temp.tagName.toLowerCase() != "body") {
@@ -722,7 +831,7 @@ function playDisable(setting) {
 }
 
 function switchPS() {
-    if ((isPlaying||isPause)||isPlayingSuite||isPlayingAll) {
+    if ((isPlaying || isPause) || isPlayingSuite || isPlayingAll) {
         playDisable(true);
         document.getElementById("playback").style.display = "none";
         document.getElementById("stop").style.display = "";
@@ -751,7 +860,7 @@ function catchPlayingError(reason) {
     // doCommands funciton will fail, so keep retrying to get connection
     if (isReceivingEndError(reason)) {
         commandType = "preparation";
-        setTimeout(function() {
+        setTimeout(function () {
             currentPlayingCommandIndex--;
             playAfterConnectionFailed();
         }, 100);
@@ -761,22 +870,48 @@ function catchPlayingError(reason) {
         extCommand.clear();
         enableClick();
         sideex_log.error(reason);
+        // # 改
+        let commands = getRecordsArray();
 
         if (currentPlayingCommandIndex >= 0) {
             setColor(currentPlayingCommandIndex + 1, "fail");
+            // # 改 test case 執行失敗
+            let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
+            if (commandGherkin) {
+                reportData.failedGherkin.push(commandGherkin);
+                findAndRemove(reportData.passedGherkin, commandGherkin); // 從passed移除
+            }
         }
         setColor(currentTestCaseId, "fail");
+        // # 改 test case 執行失敗
+        let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
+        if (commandGherkin) {
+            reportData.failedGherkin.push(commandGherkin);
+            findAndRemove(reportData.passedGherkin, commandGherkin); // 從passed移除
+        }
         // KAT-BEGIN
         // document.getElementById("result-failures").textContent = parseInt(document.getElementById("result-failures").textContent) + 1;
         // KAT-END
         logEndTime();
         sideex_log.info("Test case failed");
+        // # 改
+        caseFailed = true;
+        reportData.p1Data[reportData.nowReportIdx].status = false;
+        reportData.p1Data[reportData.nowReportIdx].name = sideex_testCase[currentTestCaseId].title;
+        reportData.p1Data[reportData.nowReportIdx].duration = +new Date() - reportData.tmpStartTime;
+        reportData.p1Data[reportData.nowReportIdx].show = true;
+        reportData.nowReportIdx++;
+        reportData.p1Data.push(clone(reportData.rawData, true));
+        renderReport();
 
         /* Clear the flag, reset to recording phase */
         /* A small delay for preventing recording events triggered in playing phase*/
 
-        setTimeout(function() {
+        setTimeout(function () {
             isPlaying = false;
+            // # 改
+            apiLogOff();
+            
             //isRecording = true;
             switchPS();
         }, 500);
@@ -790,7 +925,7 @@ function doPreparation() {
     }
     //console.log("in preparation");
     return extCommand.sendCommand("waitPreparation", "", "")
-        .then(function() {
+        .then(function () {
             return true;
         })
 }
@@ -803,14 +938,14 @@ function doPrePageWait() {
     }
     //console.log("in prePageWait");
     return extCommand.sendCommand("prePageWait", "", "")
-       .then(function(response) {
-           if (response && response.new_page) {
-               //console.log("prePageWaiting");
-               return doPrePageWait();
-           } else {
-               return true;
-           }
-       })
+        .then(function (response) {
+            if (response && response.new_page) {
+                //console.log("prePageWaiting");
+                return doPrePageWait();
+            } else {
+                return true;
+            }
+        })
 }
 
 function doPageWait() {
@@ -820,7 +955,7 @@ function doPageWait() {
     }
     //console.log("in pageWait");
     return extCommand.sendCommand("pageWait", "", "")
-        .then(function(response) {
+        .then(function (response) {
             if (pageTime && (Date.now() - pageTime) > 30000) {
                 sideex_log.error("Page Wait timed out after 30000ms");
                 pageCount = 0;
@@ -848,7 +983,7 @@ function doAjaxWait() {
         return Promise.reject("shutdown");
     }
     return extCommand.sendCommand("ajaxWait", "", "")
-        .then(function(response) {
+        .then(function (response) {
             if (ajaxTime && (Date.now() - ajaxTime) > 30000) {
                 sideex_log.error("Ajax Wait timed out after 30000ms");
                 ajaxCount = 0;
@@ -876,7 +1011,7 @@ function doDomWait() {
     }
     //console.log("in domWait");
     return extCommand.sendCommand("domWait", "", "")
-        .then(function(response) {
+        .then(function (response) {
             if (domTime && (Date.now() - domTime) > 30000) {
                 sideex_log.error("DOM Wait timed out after 30000ms");
                 domCount = 0;
@@ -897,26 +1032,34 @@ function doDomWait() {
         })
 }
 
+// # 改
+var elapsedTime = 0;
+var startTime;
+var endTime;
 function doCommand() {
     let commands = getRecordsArray();
     let commandName = getCommandName(commands[currentPlayingCommandIndex]);
-	if(commandName.indexOf("${") !== -1){
-		commandName = convertVariableToString(commandName);
-	}
+    if (commandName.indexOf("${") !== -1) {
+        commandName = convertVariableToString(commandName);
+    }
     var formalCommandName = formalCommands[commandName.trim().toLowerCase()];
     if (formalCommandName) {
         commandName = formalCommandName;
     }
     let commandTarget = getCommandTarget(commands[currentPlayingCommandIndex]);
     let commandValue = getCommandValue(commands[currentPlayingCommandIndex]);
+    // # 改
+    let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
     //console.log("in common");
 
     if (implicitCount == 0) {
         if (commandTarget.includes("d-XPath")) {
-            sideex_log.info("Executing: | " + commandName + " | " + getCommandTarget(commands[currentPlayingCommandIndex], true) + " | " + commandValue + " |");
+            // # 改
+            sideex_log.info("Executing: | " + commandName + " | " + getCommandTarget(commands[currentPlayingCommandIndex], true) + " | " + commandValue + " |" + commandGherkin + " |");
         } else {
+            // # 改
             if (commandName !== '#') {
-                sideex_log.info("Executing: | " + commandName + " | " + commandTarget + " | " + commandValue + " |");
+                sideex_log.info("Executing: | " + commandName + " | " + commandTarget + " | " + commandValue + " |" + commandGherkin + " |");
             }
         }
     }
@@ -926,15 +1069,20 @@ function doCommand() {
         return Promise.reject("shutdown");
     }
 
-    let p = new Promise(function(resolve, reject) {
+    // # 改
+    // 計算執行時間
+    elapsedTime = +new Date() - startTime;
+    startTime = +new Date();
+
+    let p = new Promise(function (resolve, reject) {
         let count = 0;
-        let interval = setInterval(function() {
+        let interval = setInterval(function () {
             if (!isPlaying) {
                 currentPlayingCommandIndex--;
                 reject("shutdown");
                 clearInterval(interval);
             }
-            var limit = 30000/10;
+            var limit = 30000 / 10;
             if (count > limit) {
                 sideex_log.error("Timed out after 30000ms");
                 reject("Window not Found");
@@ -951,213 +1099,196 @@ function doCommand() {
             }
         }, 10);
     });
-    return p.then(function() {
-            if (commandName === '#') {
-                return {
-                    result: 'success'
-                };
-            }
-            if (expectingLabel !== null && commandName !== 'label') {
-                return {
-                    result: 'success'
-                };
-            }
-            var originalCommandTarget = commandTarget;
-            // in case blockStack is undefined
-            if (!blockStack) {
-                blockStack = [];
-            }
-            // get the last block
-            var lastBlock;
-            if (blockStack.length == 0) {
-                lastBlock = undefined;
-            } else {
-                lastBlock = blockStack[blockStack.length - 1];
-            }
-            // check if this block is skipped
-            var skipped = lastBlock &&
-                    (lastBlock.dummy ||
-                    (lastBlock.isLoadVars && lastBlock.done) ||
-                    (lastBlock.isIf && !lastBlock.condition) ||
-                    (lastBlock.isWhile && !lastBlock.condition));
-            // normal command: just skipped
-            if (skipped && (['loadVars', 'endLoadVars', 'if', 'else', 'elseIf', 'endIf', 'while', 'endWhile'].indexOf(commandName) < 0)) {
-                return {
-                    result: 'success'
-                };
-            } else if (skipped && (['loadVars', 'if', 'while'].indexOf(commandName) >= 0)) {
-                // open block commands: push dummy block
-                blockStack.push({
-                    dummy: true
-                });
-                return {
-                    result: 'success'
-                };
-            } else if (skipped && (['endLoadVars', 'endIf', 'endWhile'].indexOf(commandName) >= 0)) {
-                // remove dummy block on end
-                if (lastBlock.dummy) {
-                    blockStack.pop();
-                    return {
-                        result: 'success'
-                    };
-                }
-            } else if (skipped && (['else', 'elseIf'].indexOf(commandName) >= 0)) {
-                // intermediate statement: only ignore if inside skipped block
-                if (lastBlock.dummy) {
-                    return {
-                        result: 'success'
-                    };
-                }
-            }
-            if(commandValue.indexOf("${") !== -1){
-                commandValue = convertVariableToString(commandValue);
-            }
-            if(commandTarget.indexOf("${") !== -1){
-                commandTarget = convertVariableToString(commandTarget);
-            }
-            if ((commandName === 'storeEval') || (commandName === 'storeEvalAndWait')) {
-                commandTarget = expandForStoreEval(commandTarget);
-            }
-            if (commandName === 'if') {
-                var condition = evalIfCondition(commandTarget);
-                blockStack.push({
-                    isIf: true,
-                    condition: condition,
-                    met: condition // if block has "true" condition
-                });
-                return {
-                    result: 'success'
-                };
-            }
-            if (commandName === 'else') {
-                if (lastBlock.met) {
-                    lastBlock.condition = false;
-                } else {
-                    lastBlock.condition = !lastBlock.condition;
-                    lastBlock.met = lastBlock.condition;
-                }
-                return {
-                    result: 'success'
-                };
-            }
-            if (commandName === 'elseIf') {
-                if (lastBlock.met) {
-                    lastBlock.condition = false;
-                } else {
-                    lastBlock.condition = evalIfCondition(commandTarget);
-                    lastBlock.met = lastBlock.condition;
-                }
-                return {
-                    result: 'success'
-                };
-            }
-            if (commandName === 'endIf') {
-                // end block
+    return p.then(function () {
+        if (commandName === '#') {
+            return {
+                result: 'success'
+            };
+        }
+        if (expectingLabel !== null && commandName !== 'label') {
+            return {
+                result: 'success'
+            };
+        }
+        var originalCommandTarget = commandTarget;
+        // in case blockStack is undefined
+        if (!blockStack) {
+            blockStack = [];
+        }
+        // get the last block
+        var lastBlock;
+        if (blockStack.length == 0) {
+            lastBlock = undefined;
+        } else {
+            lastBlock = blockStack[blockStack.length - 1];
+        }
+        // check if this block is skipped
+        var skipped = lastBlock &&
+            (lastBlock.dummy ||
+                (lastBlock.isLoadVars && lastBlock.done) ||
+                (lastBlock.isIf && !lastBlock.condition) ||
+                (lastBlock.isWhile && !lastBlock.condition));
+        // normal command: just skipped
+        if (skipped && (['loadVars', 'endLoadVars', 'if', 'else', 'elseIf', 'endIf', 'while', 'endWhile'].indexOf(commandName) < 0)) {
+            return {
+                result: 'success'
+            };
+        } else if (skipped && (['loadVars', 'if', 'while'].indexOf(commandName) >= 0)) {
+            // open block commands: push dummy block
+            blockStack.push({
+                dummy: true
+            });
+            return {
+                result: 'success'
+            };
+        } else if (skipped && (['endLoadVars', 'endIf', 'endWhile'].indexOf(commandName) >= 0)) {
+            // remove dummy block on end
+            if (lastBlock.dummy) {
                 blockStack.pop();
                 return {
                     result: 'success'
                 };
             }
-            if (commandName === 'while') {
-                blockStack.push({
-                    isWhile: true,
-                    index: currentPlayingCommandIndex,
-                    condition: evalIfCondition(commandTarget),
-                    originalCommandTarget: originalCommandTarget
+        } else if (skipped && (['else', 'elseIf'].indexOf(commandName) >= 0)) {
+            // intermediate statement: only ignore if inside skipped block
+            if (lastBlock.dummy) {
+                return {
+                    result: 'success'
+                };
+            }
+        }
+        if (commandValue.indexOf("${") !== -1) {
+            commandValue = convertVariableToString(commandValue);
+        }
+        if (commandTarget.indexOf("${") !== -1) {
+            commandTarget = convertVariableToString(commandTarget);
+        }
+        if ((commandName === 'storeEval') || (commandName === 'storeEvalAndWait')) {
+            commandTarget = expandForStoreEval(commandTarget);
+        }
+        if (commandName === 'if') {
+            var condition = evalIfCondition(commandTarget);
+            blockStack.push({
+                isIf: true,
+                condition: condition,
+                met: condition // if block has "true" condition
+            });
+            return {
+                result: 'success'
+            };
+        }
+        if (commandName === 'else') {
+            if (lastBlock.met) {
+                lastBlock.condition = false;
+            } else {
+                lastBlock.condition = !lastBlock.condition;
+                lastBlock.met = lastBlock.condition;
+            }
+            return {
+                result: 'success'
+            };
+        }
+        if (commandName === 'elseIf') {
+            if (lastBlock.met) {
+                lastBlock.condition = false;
+            } else {
+                lastBlock.condition = evalIfCondition(commandTarget);
+                lastBlock.met = lastBlock.condition;
+            }
+            return {
+                result: 'success'
+            };
+        }
+        if (commandName === 'endIf') {
+            // end block
+            blockStack.pop();
+            return {
+                result: 'success'
+            };
+        }
+        if (commandName === 'while') {
+            blockStack.push({
+                isWhile: true,
+                index: currentPlayingCommandIndex,
+                condition: evalIfCondition(commandTarget),
+                originalCommandTarget: originalCommandTarget
+            });
+            return {
+                result: 'success'
+            };
+        }
+        if (commandName === 'endWhile') {
+            var lastBlockCommandTarget = lastBlock.originalCommandTarget;
+            if (lastBlockCommandTarget.indexOf("${") !== -1) {
+                lastBlockCommandTarget = convertVariableToString(lastBlockCommandTarget);
+            }
+            lastBlock.condition = evalIfCondition(lastBlockCommandTarget);
+            if (lastBlock.condition) {
+                // back to while
+                currentPlayingCommandIndex = lastBlock.index;
+                return {
+                    result: 'success'
+                };
+            } else {
+                blockStack.pop();
+                return {
+                    result: 'success'
+                };
+            }
+        }
+        if (commandName === 'loadVars') {
+            // parse once
+            var parsedData = parseData(commandTarget);
+            var data = parsedData.data;
+            var block = {
+                isLoadVars: true,
+                index: currentPlayingCommandIndex,
+                currentLine: 0, // line of data
+                data: data,
+                type: parsedData.type,
+                done: data.length == 0 // done if empty file
+            };
+            blockStack.push(block);
+            if (!block.done) { // if not done get next line
+                var line = block.data[block.currentLine];
+                $.each(line, function (key, value) {
+                    declaredVars[key] = value;
                 });
-                return {
-                    result: 'success'
-                };
             }
-            if (commandName === 'endWhile') {
-                var lastBlockCommandTarget = lastBlock.originalCommandTarget;
-                if(lastBlockCommandTarget.indexOf("${") !== -1){
-                    lastBlockCommandTarget = convertVariableToString(lastBlockCommandTarget);
-                }
-                lastBlock.condition = evalIfCondition(lastBlockCommandTarget);
-                if (lastBlock.condition) {
-                    // back to while
-                    currentPlayingCommandIndex = lastBlock.index;
-                    return {
-                        result: 'success'
-                    };
-                } else {
-                    blockStack.pop();
-                    return {
-                        result: 'success'
-                    };
-                }
+            return {
+                result: 'success'
+            };
+        }
+        if (commandName === 'endLoadVars') {
+            // next data line
+            lastBlock.currentLine++;
+            lastBlock.done = lastBlock.currentLine >= lastBlock.data.length; // out of data
+            if (lastBlock.done) {
+                blockStack.pop(); // quit block
+            } else {
+                currentPlayingCommandIndex = lastBlock.index; // back to command after while
+                var line = lastBlock.data[lastBlock.currentLine] // next data
+                $.each(line, function (key, value) {
+                    declaredVars[key] = value;
+                });
             }
-            if (commandName === 'loadVars') {
-                // parse once
-                var parsedData = parseData(commandTarget);
-                var data = parsedData.data;
-                var block = {
-                    isLoadVars: true,
-                    index: currentPlayingCommandIndex,
-                    currentLine: 0, // line of data
-                    data: data,
-                    type: parsedData.type,
-                    done: data.length == 0 // done if empty file
-                };
-                blockStack.push(block);
-                if (!block.done) { // if not done get next line
-                    var line = block.data[block.currentLine];
-                    $.each(line, function(key, value) {
-                        declaredVars[key] = value;
-                    });
-                }
-                return {
-                    result: 'success'
-                };
+            return {
+                result: 'success'
+            };
+        }
+        if (commandName === 'label') {
+            var label = currentTestCaseId + '-' + commandTarget;
+            labels[label] = currentPlayingCommandIndex;
+            if (expectingLabel === label) {
+                expectingLabel = null;
             }
-            if (commandName === 'endLoadVars') {
-                // next data line
-                lastBlock.currentLine++;
-                lastBlock.done = lastBlock.currentLine >= lastBlock.data.length; // out of data
-                if (lastBlock.done) {
-                    blockStack.pop(); // quit block
-                } else {
-                    currentPlayingCommandIndex = lastBlock.index; // back to command after while
-                    var line = lastBlock.data[lastBlock.currentLine] // next data
-                    $.each(line, function(key, value) {
-                        declaredVars[key] = value;
-                    });
-                }
-                return {
-                    result: 'success'
-                };
-            }
-            if (commandName === 'label') {
-                var label = currentTestCaseId + '-' + commandTarget;
-                labels[label] = currentPlayingCommandIndex;
-                if (expectingLabel === label) {
-                    expectingLabel = null;
-                }
-                return {
-                    result: 'success'
-                };
-            }
-            if (commandName === 'gotoIf') {
-                if (evalIfCondition(commandTarget)) {
-                    var label = currentTestCaseId + '-' + commandValue;
-                    var jumpTo = labels[label];
-                    if (jumpTo === undefined) {
-                        expectingLabel = label;
-                    } else {
-                        currentPlayingCommandIndex = jumpTo;
-                    }
-                    return {
-                        result: 'success'
-                    };
-                } else {
-                    return {
-                        result: 'success'
-                    };
-                }
-            }
-            if (commandName === 'gotoLabel') {
-                var label = currentTestCaseId + '-' + commandTarget;
+            return {
+                result: 'success'
+            };
+        }
+        if (commandName === 'gotoIf') {
+            if (evalIfCondition(commandTarget)) {
+                var label = currentTestCaseId + '-' + commandValue;
                 var jumpTo = labels[label];
                 if (jumpTo === undefined) {
                     expectingLabel = label;
@@ -1167,23 +1298,52 @@ function doCommand() {
                 return {
                     result: 'success'
                 };
-            }
-            if (commandName === 'storeCsv') {
-                var tokens = commandTarget.split(',');
-                var csvValue = parseData(tokens[0]).data[parseInt(tokens[1])][tokens[2]];
-                sideex_log.info("Store '" + csvValue + "' into '" + commandValue + "'");
-                declaredVars[commandValue] = csvValue;
+            } else {
                 return {
                     result: 'success'
                 };
             }
-            if (isWindowMethodCommand(commandName))
-            {
-                return extCommand.sendCommand(commandName, commandTarget, commandValue, true);
+        }
+        if (commandName === 'gotoLabel') {
+            var label = currentTestCaseId + '-' + commandTarget;
+            var jumpTo = labels[label];
+            if (jumpTo === undefined) {
+                expectingLabel = label;
+            } else {
+                currentPlayingCommandIndex = jumpTo;
             }
-            return extCommand.sendCommand(commandName, commandTarget, commandValue);
-        })
-        .then(function(result) {
+            return {
+                result: 'success'
+            };
+        }
+        // # 改 elapsedTimeLessThen
+        if (commandName === 'elapsedTimeLessThen') {
+            if (elapsedTime == NaN || elapsedTime < commandTarget) { // NaN會是第一筆
+                sideex_log.info('elapsedTime：' + elapsedTime + 'ms, pass');
+                return {
+                    result: 'success'
+                };
+            } else {
+                return {
+                    result: 'elapsedTime ' + elapsedTime + 'ms, fail'
+                };
+            }
+        }
+        if (commandName === 'storeCsv') {
+            var tokens = commandTarget.split(',');
+            var csvValue = parseData(tokens[0]).data[parseInt(tokens[1])][tokens[2]];
+            sideex_log.info("Store '" + csvValue + "' into '" + commandValue + "'");
+            declaredVars[commandValue] = csvValue;
+            return {
+                result: 'success'
+            };
+        }
+        if (isWindowMethodCommand(commandName)) {
+            return extCommand.sendCommand(commandName, commandTarget, commandValue, true);
+        }
+        return extCommand.sendCommand(commandName, commandTarget, commandValue);
+    })
+        .then(function (result) {
             if (result.result != "success") {
 
                 var originalCurrentPlayingCommandIndex = currentPlayingCommandIndex;
@@ -1209,6 +1369,17 @@ function doCommand() {
                 sideex_log.error(result.result);
                 setColor(currentPlayingCommandIndex + 1, "fail");
                 setColor(currentTestCaseId, "fail");
+                // # 改 test case 執行失敗
+                let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
+                if (commandGherkin) {
+                    reportData.failedGherkin.push(commandGherkin);
+                    findAndRemove(reportData.passedGherkin, commandGherkin); // 從passed移除
+                }
+                if (result.result.match(/elapsedTime/)) {
+                    logEndTime();
+                    caseFailed = true;
+                    currentPlayingCommandIndex = commands.length;
+                }
                 // KAT-BEGIN
                 // document.getElementById("result-failures").textContent = parseInt(document.getElementById("result-failures").textContent) + 1;
                 // KAT-END
@@ -1219,15 +1390,29 @@ function doCommand() {
                     sideex_log.info("Test case failed");
                     caseFailed = true;
                     currentPlayingCommandIndex = commands.length;
+                    // # 改
+                    reportData.p1Data[reportData.nowReportIdx].status = false;
+                    reportData.p1Data[reportData.nowReportIdx].name = sideex_testCase[currentTestCaseId].title;
+                    reportData.p1Data[reportData.nowReportIdx].duration = +new Date() - reportData.tmpStartTime;
+                    reportData.p1Data[reportData.nowReportIdx].show = true;
+                    reportData.nowReportIdx++;
+                    reportData.p1Data.push(clone(reportData.rawData, true));
+                    renderReport();
                 }
                 return browser.runtime.sendMessage({
                     captureEntirePageScreenshot: true,
                     captureWindowId: extCommand.getContentWindowId()
-                }).then(function(captureResponse) {
+                }).then(function (captureResponse) {
                     addToScreenshot(captureResponse.image, 'fail-' + sideex_testCase[currentTestCaseId].title + '-' + originalCurrentPlayingCommandIndex);
                 });
             } else {
                 setColor(currentPlayingCommandIndex + 1, "success");
+                // # 改 test case 執行成功
+                let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
+                if (commandGherkin) {
+                    reportData.passedGherkin.push(commandGherkin);
+                    findAndRemove(reportData.failedGherkin, commandGherkin); // 從failed移除
+                }
                 if (result.capturedScreenshot) {
                     addToScreenshot(result.capturedScreenshot, result.capturedScreenshotTitle);
                 }
@@ -1242,7 +1427,7 @@ function isReceivingEndError(reason) {
         reason.message == "Could not establish connection. Receiving end does not exist." ||
         // Google Chrome misspells "response"
         reason.message == "The message port closed before a reponse was received." ||
-        reason.message == "The message port closed before a response was received." )
+        reason.message == "The message port closed before a response was received.")
         return true;
     return false;
 }
@@ -1267,16 +1452,16 @@ function disableButton(buttonId) {
     document.getElementById(buttonId).disabled = true;
 }
 
-function convertVariableToString(variable){
+function convertVariableToString(variable) {
     var originalVariable = variable;
     let frontIndex = variable.indexOf("${");
     let newStr = "";
-    while(frontIndex !== -1){
-        let prefix = variable.substring(0,frontIndex);
+    while (frontIndex !== -1) {
+        let prefix = variable.substring(0, frontIndex);
         let suffix = variable.substring(frontIndex);
         let tailIndex = suffix.indexOf("}");
         if (tailIndex >= 0) {
-            let suffix_front = suffix.substring(0,tailIndex + 1);
+            let suffix_front = suffix.substring(0, tailIndex + 1);
             let suffix_tail = suffix.substring(tailIndex + 1);
             newStr += prefix + xlateArgument(suffix_front);
             variable = suffix_tail;

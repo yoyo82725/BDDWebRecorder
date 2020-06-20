@@ -31,7 +31,9 @@ function fileToPanel(f) {
     output = "";
     if (tr)
         for (var i = 0; i < tr.length; ++i) {
-            pattern = tr[i].match(/(?:<tr>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<datalist>)([\s\S]*?)(?:<\/datalist>([\s]*?)<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<\/tr>)/);
+            // # 改
+            // pattern = tr[i].match(/(?:<tr>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<datalist>)([\s\S]*?)(?:<\/datalist>([\s]*?)<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<\/tr>)/);
+            pattern = tr[i].match(/(?:<tr>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<datalist>)([\s\S]*?)(?:<\/datalist>([\s]*?)<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<\/tr>)/);
             if (pattern === null) {
                 pattern = tr[i].match(/(?:<tr>)([\s]*?)(?:<td class="break">)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<datalist>)([\s\S]*?)(?:<\/datalist>([\s]*?)<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<\/tr>)/);
             }
@@ -44,9 +46,13 @@ function fileToPanel(f) {
             } else if (index === 0) {
                 pattern[4] = '';
             }
+            // # 改
+            // var new_tr = '<tr>' + pattern[1] + '<td><div style="display: none;">' + pattern[2] + '</div><div style="overflow:hidden;height:15px;"></div></td>' + pattern[3] + '<td><div style="display: none;">' + pattern[4] +
+            //     '</div><div style="overflow:hidden;height:15px;"></div>\n        ' + '<datalist>' + pattern[5] + '</datalist>' + pattern[6] + '</td>' +
+            //     pattern[7] + '<td><div style="display: none;">' + pattern[8] + '</div><div style="overflow:hidden;height:15px;"></div></td>' + pattern[9] + '</tr>';
             var new_tr = '<tr>' + pattern[1] + '<td><div style="display: none;">' + pattern[2] + '</div><div style="overflow:hidden;height:15px;"></div></td>' + pattern[3] + '<td><div style="display: none;">' + pattern[4] +
                 '</div><div style="overflow:hidden;height:15px;"></div>\n        ' + '<datalist>' + pattern[5] + '</datalist>' + pattern[6] + '</td>' +
-                pattern[7] + '<td><div style="display: none;">' + pattern[8] + '</div><div style="overflow:hidden;height:15px;"></div></td>' + pattern[9] + '</tr>';
+                pattern[7] + '<td><div style="display: none;">' + pattern[8] + '</div><div style="overflow:hidden;height:15px;"></div></td>' + pattern[9] + '<td><div style="display: none;">' + pattern[10] + '</div><div style="overflow:hidden;height:15px;"></div></td>' + pattern[11] + '</tr>';
 
             output = output + new_tr + "\n";
 
@@ -66,8 +72,9 @@ function readCase(f) {
             reAssignId("records-1", "records-" + count);
             var r = getRecordsArray();
             for (var i = 1; i <= count; ++i) {
+                // # 改
                 // do not forget that textNode is a childNode
-                for (var j = 0; j < 3; ++j) {
+                for (var j = 0; j < 4; ++j) {
                     var node = document.getElementById("records-" + i).getElementsByTagName("td")[j];
                     var adjust = unescapeHtml(node.childNodes[0].innerHTML);
                     node.childNodes[1].appendChild(document.createTextNode(adjust));
@@ -84,12 +91,16 @@ function readCase(f) {
     var id = "case" + sideex_testCase.count;
     sideex_testCase.count++;
     var records = document.getElementById("records-grid").innerHTML;
-    var case_title = f.match(/(?:<thead>[\s\S]*?<td rowspan="1" colspan="3">)([\s\S]*?)(?:<\/td>)/)[1];
+    // # 改
+    // var case_title = f.match(/(?:<thead>[\s\S]*?<td rowspan="1" colspan="3">)([\s\S]*?)(?:<\/td>)/)[1];
+    var case_title = f.match(/(?:<thead>[\s\S]*?<td rowspan="1" colspan="4">)([\s\S]*?)(?:<\/td>)/)[1];
     sideex_testCase[id] = {
         records: records,
         title: case_title
     };
     addTestCase(case_title, id);
+    // # 改 寫入gherkin select
+    reloadGherkinSelect();
 }
 
 function readSuite(f) {
@@ -127,8 +138,13 @@ function readSuite(f) {
             test_suite = addMeta(test_suite);
         }
 
+        // # 改
+        var suite_gherkin = test_suite.match(/(?:<pre>[\s\S]*?)([\s\S]*?)(?:<\/pre>)/) && test_suite.match(/(?:<pre>[\s\S]*?)([\s\S]*?)(?:<\/pre>)/)[1];
+        var suite_gherkinFileName = test_suite.match(/(?:<h1>[\s\S]*?)([\s\S]*?)(?:<\/h1>)/) && test_suite.match(/(?:<h1>[\s\S]*?)([\s\S]*?)(?:<\/h1>)/)[1];
         // append on test grid
-        appendTestSuite(f, test_suite);
+        // # 改
+        appendTestSuite(f, test_suite, suite_gherkin,suite_gherkinFileName);
+        genDataTable(suite_gherkin,suite_gherkinFileName);
         return;
         // set up some veraible for recording after loading
     };

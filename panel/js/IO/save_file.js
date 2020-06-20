@@ -59,7 +59,9 @@ function panelToFile(str) {
     str = "\n";
     if(tr)
     for (var i = 0; i < tr.length; ++i) {
-        var pattern = tr[i].match(/([\s]*?)(?:<td[\b\s\S]*>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<datalist>)([\s\S]*?)(?:<\/datalist><\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)/);
+        // # 改
+        // var pattern = tr[i].match(/([\s]*?)(?:<td[\b\s\S]*>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<datalist>)([\s\S]*?)(?:<\/datalist><\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)/);
+        var pattern = tr[i].match(/([\s]*?)(?:<td[\b\s\S]*>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<datalist>)([\s\S]*?)(?:<\/datalist><\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)([\s]*?)(?:<td>)([\s\S]*?)(?:<\/td>)/);
         if (!pattern) {
             str = temp_str;
             break;
@@ -72,7 +74,9 @@ function panelToFile(str) {
             option[j] = option[j].replace(/<option>/, "").replace(/<\/option>/, "");
             str = str + "<option>" + option[j] + "</option>";
         }
-        str = str + "</datalist></td>" + pattern[6] + "<td>" + pattern[7] + "</td>\n</tr>\n";
+        // # 改
+        // str = str + "</datalist></td>" + pattern[6] + "<td>" + pattern[7] + "</td>\n</tr>\n";
+        str = str + "</datalist></td>" + pattern[6] + "<td>" + pattern[7] + "</td>" + pattern[8] + "<td>" + pattern[9] + "</td>\n</tr>\n";
     }
     str = '<tbody>' + str + '</tbody>';
     return str;
@@ -100,8 +104,22 @@ function downloadSuite(s_suite,callback) {
         for (var i = 0; i < cases.length; ++i) {
             setSelectedCase(cases[i].id);
             saveNewTarget();
+            // # 改
+            // output = output +
+            //     '<table cellpadding="1" cellspacing="1" border="1">\n<thead>\n<tr><td rowspan="1" colspan="3">' +
+            //     sideex_testCase[cases[i].id].title +
+            //     '</td></tr>\n</thead>\n' +
+            //     panelToFile(document.getElementById("records-grid").innerHTML) +
+            //     '</table>\n';
             output = output +
-                '<table cellpadding="1" cellspacing="1" border="1">\n<thead>\n<tr><td rowspan="1" colspan="3">' +
+                '<h1>' + 
+                (sideex_testSuite[s_suite.id].gherkinFileName ? sideex_testSuite[s_suite.id].gherkinFileName : '') +
+                '</h1>\n' + 
+                '<pre>' +
+                (sideex_testSuite[s_suite.id].gherkin ? sideex_testSuite[s_suite.id].gherkin : '') +
+                '</pre>\n' +
+                '<table cellpadding="1" cellspacing="1" border="1">\n' +
+                '<thead>\n<tr><td rowspan="1" colspan="4">' +
                 sideex_testCase[cases[i].id].title +
                 '</td></tr>\n</thead>\n' +
                 panelToFile(document.getElementById("records-grid").innerHTML) +

@@ -35,4 +35,6 @@ function clean_panel() {
     document.getElementById("command-command").value = "";
     document.getElementById("command-target").value = "";
     document.getElementById("command-value").value = "";
+    // # 改
+    document.getElementById("command-gherkin").value = "";
 }

@@ -50,6 +50,8 @@ $(document).ready(function() {
             document.getElementById("command-command").value = getCommandName(ui.item[0]);
             document.getElementById("command-target").value = getCommandTarget(ui.item[0], true);
             document.getElementById("command-value").value = getCommandValue(ui.item[0]);
+            // # 改
+            document.getElementById("command-gherkin").value = getCommandGherkin(ui.item[0]);
 
             // store command grid to testCase 
             var s_case = getSelectedCase();
