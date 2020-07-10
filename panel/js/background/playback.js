@@ -397,7 +397,7 @@ function cleanCommandToolBar() {
 }
 
 function play() {
-    
+
     // _gaq.push(['_trackEvent', 'app', 'play']);
 
     addSampleDataToScreenshot();
@@ -505,7 +505,7 @@ function playSuite(i) {
     isPlayingSuite = true;
     // # 改
     apiLogOn();
-    
+
     var cases = getSelectedSuite().getElementsByTagName("p");
     var length = cases.length;
     /* KAT-BEGIN remove log
@@ -527,7 +527,7 @@ function playSuite(i) {
         isPlayingSuite = false;
         // # 改
         apiLogOff();
-        
+
         switchPS();
     }
 }
@@ -556,7 +556,7 @@ function playSuites(i) {
         isPlayingAll = false;
         // # 改
         apiLogOff();
-        
+
         switchPS();
     }
 }
@@ -732,7 +732,7 @@ function executionLoop() {
     let commandValue = getCommandValue(commands[currentPlayingCommandIndex]);
     // # 改
     let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
-    if(commandGherkin) {
+    if (commandGherkin) {
         // 儲存時間對應
         timeUrlGherkinMap.push({
             url: undefined,
@@ -793,7 +793,7 @@ function finalizePlayingProgress() {
         isPlaying = false;
         // # 改
         apiLogOff();
-        
+
         switchPS();
     }, 500);
 }
@@ -911,7 +911,7 @@ function catchPlayingError(reason) {
             isPlaying = false;
             // # 改
             apiLogOff();
-            
+
             //isRecording = true;
             switchPS();
         }, 500);
@@ -1316,12 +1316,31 @@ function doCommand() {
                 result: 'success'
             };
         }
-        // # 改 elapsedTimeLessThen
-        if (commandName === 'elapsedTimeLessThen') {
+        // # 改 verifyElapsedTimeLessThen
+        if (commandName === 'verifyElapsedTimeLessThen') {
+            // if (elapsedTime == NaN || elapsedTime < commandTarget) { // NaN會是第一筆
+            //     sideex_log.info('elapsedTime：' + elapsedTime + 'ms, pass');
+            //     return {
+            //         result: 'success',
+            //         time: elapsedTime
+            //     };
+            // } else {
+            //     return {
+            //         result: 'elapsedTime ' + elapsedTime + 'ms, fail'
+            //     };
+            // }
+            return {
+                result: 'success',
+                time: elapsedTime,
+                target: commandTarget
+            };
+        }
+        if (commandName === 'assertElapsedTimeLessThen') {
             if (elapsedTime == NaN || elapsedTime < commandTarget) { // NaN會是第一筆
                 sideex_log.info('elapsedTime：' + elapsedTime + 'ms, pass');
                 return {
-                    result: 'success'
+                    result: 'success',
+                    time: elapsedTime
                 };
             } else {
                 return {
@@ -1375,22 +1394,13 @@ function doCommand() {
                     reportData.failedGherkin.push(commandGherkin);
                     findAndRemove(reportData.passedGherkin, commandGherkin); // 從passed移除
                 }
-                if (result.result.match(/elapsedTime/)) {
-                    logEndTime();
-                    caseFailed = true;
-                    currentPlayingCommandIndex = commands.length;
-                }
-                // KAT-BEGIN
-                // document.getElementById("result-failures").textContent = parseInt(document.getElementById("result-failures").textContent) + 1;
-                // KAT-END
-                if (commandName.includes("verify") && result.result.includes("did not match")) {
-                    setColor(currentPlayingCommandIndex + 1, "fail");
-                } else {
+                // # 改 assertElapsedTimeLessThen
+                if (commandName == 'assertElapsedTimeLessThen') {
                     logEndTime();
                     sideex_log.info("Test case failed");
                     caseFailed = true;
                     currentPlayingCommandIndex = commands.length;
-                    // # 改
+                    
                     reportData.p1Data[reportData.nowReportIdx].status = false;
                     reportData.p1Data[reportData.nowReportIdx].name = sideex_testCase[currentTestCaseId].title;
                     reportData.p1Data[reportData.nowReportIdx].duration = +new Date() - reportData.tmpStartTime;
@@ -1398,7 +1408,28 @@ function doCommand() {
                     reportData.nowReportIdx++;
                     reportData.p1Data.push(clone(reportData.rawData, true));
                     renderReport();
+                } else {
+                    // KAT-BEGIN
+                    // document.getElementById("result-failures").textContent = parseInt(document.getElementById("result-failures").textContent) + 1;
+                    // KAT-END
+                    if (commandName.includes("verify") && result.result.includes("did not match")) {
+                        setColor(currentPlayingCommandIndex + 1, "fail");
+                    } else {
+                        logEndTime();
+                        sideex_log.info("Test case failed");
+                        caseFailed = true;
+                        currentPlayingCommandIndex = commands.length;
+                        // # 改
+                        reportData.p1Data[reportData.nowReportIdx].status = false;
+                        reportData.p1Data[reportData.nowReportIdx].name = sideex_testCase[currentTestCaseId].title;
+                        reportData.p1Data[reportData.nowReportIdx].duration = +new Date() - reportData.tmpStartTime;
+                        reportData.p1Data[reportData.nowReportIdx].show = true;
+                        reportData.nowReportIdx++;
+                        reportData.p1Data.push(clone(reportData.rawData, true));
+                        renderReport();
+                    }
                 }
+
                 return browser.runtime.sendMessage({
                     captureEntirePageScreenshot: true,
                     captureWindowId: extCommand.getContentWindowId()
@@ -1409,6 +1440,16 @@ function doCommand() {
                 setColor(currentPlayingCommandIndex + 1, "success");
                 // # 改 test case 執行成功
                 let commandGherkin = getCommandGherkin(commands[currentPlayingCommandIndex]);
+                // 判斷 elapsedTimeLessThen
+                if (commandName == 'verifyElapsedTimeLessThen') {
+                    var eTime = result.time;
+                    if (eTime != NaN && eTime < commandTarget) { // NaN會是第一筆
+                        sideex_log.info('elapsedTime：' + eTime + 'ms, pass');
+                    } else {
+                        setColor(currentPlayingCommandIndex + 1, "fail");
+                        sideex_log.error('elapsedTime：' + eTime + 'ms, fail');
+                    }
+                }
                 if (commandGherkin) {
                     reportData.passedGherkin.push(commandGherkin);
                     findAndRemove(reportData.failedGherkin, commandGherkin); // 從failed移除

@@ -4,8 +4,23 @@
 
 API劫持需將 apitrack/BDDWebRecorder-sw.js 檔案放置專案根目錄
 
-基於Katalon Recorder
+基於Katalon Recorder修改
 感謝Katalon團隊與所有參與人的貢獻
+
+測試報告連結：
+[瀏覽商品.html](/demoPic/瀏覽商品.html "瀏覽商品.html")
+[優惠券.html](/demoPic/優惠券.html "優惠券.html")
+
+內容截圖：
+![Alt text](/demoPic/pic1.png "page6")
+![Alt text](/demoPic/pic2.png "page6")
+![Alt text](/demoPic/pic3.png "page6")
+![Alt text](/demoPic/pic4.png "page6")
+![Alt text](/demoPic/pic5.png "page6")
+![Alt text](/demoPic/pic6.png "page6")
+![Alt text](/demoPic/pic7.png "page6")
+![Alt text](/demoPic/pic8.png "page6")
+![Alt text](/demoPic/pic9.png "page6")
 
 # Katalon Recorder
 

@@ -1,0 +1,193 @@
+NO: 1
+STORY: 錄製步驟
+STORY: 使用者想要錄製操作的步驟，並進行回放測試，他先打開瀏覽器上的"BDDWebRecorder"插件，接者點選[Create new test suite]按鈕，建立出一個空的Test Suite，再來點選[New test case]按鈕，建立一個Test Case，接著點選 [Record] 按鈕，即可開始對待測網站系統進行操作，操作過程都會被記錄下來，成為個別的測試步驟，在途中使用者想要停止，他打開"BDDWebRecorder"視窗，按下 [Stop] 按鈕便會停止錄製，直到按下 [Record] 按鈕後繼續錄製。
+DONE: 既有功能，無須修改。
+
+NO: 2
+STORY: 播放測試案例
+STORY: 使用者想要播放已經錄製好的Test Case，他先打開瀏覽器上的"BDDWebRecorder"插件，接著點選他想測試的Test Case，再來按下[Play]按鈕，Test Case就會完整撥放。
+使用者想要播放已經錄製好的Test Suite，點選他想測試的Test Suite，再來按下[Play Suite]按鈕，Test Suite就會完整撥放。
+使用者想要播放全部的測試，他按下[Play All]按鈕，全部的測試就會完整撥放。
+使用者想要調慢撥放的速度，他按下[Adjust Play Speed]按鈕，並將速度調慢。
+DONE: 既有功能，無須修改。
+
+NO: 3
+STORY: 錯誤畫面截圖
+STORY: 使用者在執行完測試案例後，想查看失敗時的畫面，他點擊失敗的Test Case，再來點擊 [Screen Shots] 按鈕，便可查看這個案例失敗的畫面截圖。
+DONE: 既有功能，無須修改。
+
+NO: 4
+STORY: 以CSV來Data driven
+STORY: 使用者想自動測試某表單的多種輸入值，他先將可能的輸入值整理成一份.csv檔，並將表單的輸入錄製下來，在測試編輯模式中，將步驟的value置換為變數的形式如"${var}"，再按下[Data Driven]按鈕，再按下[Add CSV File]按鈕，將.csv上傳，測試時即會測試需求的多種輸入值。
+DONE: 既有功能，無須修改。
+
+NO: 5
+STORY: 螢幕截圖指令
+STORY: 使用者想要擷Test Case回放中途的畫面，他先在測試編輯區域中按下滑鼠右鍵，再來按[Add Command]，再來在Command欄位中尋找[captureEntirePageScreenshot]功能，接著按下[Play]，再來到[ScreenShots]頁籤中找到截圖。
+DONE: 既有功能，無須修改。
+
+NO: 6
+STORY: 產生程式碼
+STORY: 使用者想要將錄製好的功能轉換為可複製的程式碼，他先打開瀏覽器上的"BDDWebRecorder"插件，他點選要轉換的測試案例，接著點下[Export]按鈕，就會出現匯出的視窗，他切換到他需要的程式語言，並複製程式碼至他自己的程式中。
+# : 測試能不能用，至少PY跟JAVA (PY不能用) (Node不知道怎麼用)
+DONE: 既有功能，無須修改。
+
+NO: 7
+STORY: 剛進入時
+STORY: 使用者在安裝"BDDWebRecorder"時不會看到官方網站，進入時可以看到Title為"BDDWebRecorder"，上方導航列按鈕依序為 [New Test Case]、[Record]、[Play]、[Play Suite]、[Play All]、[Pause]、[Export]、[Adjust play speed]，中間為Test Suite存放以及編輯區，下方為資料區；在移除"BDDWebRecorder"時也不會打開網站。
+DONE: 更改 插件名稱 為"Katalon Recorder BDD"
+DONE: 更改 版本 為4.0.0
+DONE: 更改 Title 為"Katalon Recorder BDD"
+DONE: 安裝好插件後，不該開啟官方網站
+DONE: 移除插件時，不該開啟官方網站
+DONE: 移除 NAV 的 [？] 按鈕
+DONE: 移除 NAV 的 [Github] 按鈕
+DONE: 移除 NAV 的 [齒輪] 按鈕
+DONE: 移除 [Katalon TestOps] 按鈕
+
+NO: 8
+STORY: 建立BDD錄製測試腳本
+STORY: 使用者想要建立基於BDD之錄製測試腳本，他先打開瀏覽器上的"BDDWebRecorder"插件，他先按下 [New Test Case] 按鈕，建立一個Test Case，接著按下 [Record] 按鈕，並照著.feature檔案的步驟操作網頁，操作完後回到BDDWebRecorder按下 [Stop] 按鈕，點選[Add Gherkin File...]按鈕，將其撰寫好之BDD Gherkin腳本匯入，檔案即會與Test Case綁定，再來在測試編輯模式中，使用者可對每個測試步驟順序選取其對應之Gherkin腳本步驟。
+DONE: 點選 [Record] 按鈕時，建立的 Case 要含 Gherkin 欄位
+DONE: 增加 [Add Gherkin File...] 按鈕、icon、title
+DONE: 增加 [View the Gherkin file] 按鈕、icon、title
+DONE: [Add Gherkin File...] 按鈕預設尋找.feature副檔名
+DONE: 完成上傳.feature檔案功能
+DONE: 使檔案與Test Case綁定
+DONE: 另存新檔時加入gherkin檔案
+DONE: 讀取檔案時讀取gherkin檔案
+DONE: 在 Panel 增加 Gherkin 欄位
+DONE: 在 Toolbar 增加 Gherkin Select 欄位
+DONE: 點下 Panel 的物件時 Gherkin 寫入下方 Toolbar 中的 Gherkin Select
+DONE: 修改 Toolbar 中的 Gherkin Input 時 寫入上方 Panel 中的 Gherkin 欄位
+DONE: 在檢視檔案模式下，點選toolbar的任一按鈕則回到一般檢視
+DONE: 切出檔案的 WHEN|THEN|GIVEN|AND|BUT 行
+DONE: 使檔案對應Gherkin Select
+DONE: 順序對應gherkin：選過的都disabled、非順序也disabled
+DONE: 限制 Gherkin Select 對應順序，只能由文件頭至尾 (移除)
+DONE: 使 Toolbar 中的 Gherkin Select 只能對應 Given，When，Then，And，But
+DONE: 修改 NAV 的 [NEW] 按鈕文字成 [New Test Case]
+DONE: 複製command時的gherkin欄位，為空
+DONE: 按下PLAY時，檢查gherkin是否順序
+DONE: 按下[PLAY Suite]時，檢查gherkin是否順序
+
+類別圖：
+建立Test Case
+Selenium Record
+上傳Feature檔案
+對應Gherkin
+Play Test
+BDD Report、API Report
+
+
+NO: 9
+STORY: 檢視Test Case中綁定的Gherkin檔案
+STORY: 使用者想要查看他上傳的Gherkin檔案，他先點下已經綁定Gherkin檔案的Test Case，再來按下 [View the Gherkin file] 按鈕，便顯示出該Test Case綁定的Gherkin檔案，接著再按一次 [View the Gherkin file] 按鈕，則變回步驟檢視。 若在沒有上傳Gherkin檔案的狀況下按下 [View the Gherkin file] 按鈕，便顯示出 No gherkin files uploaded 文字
+DONE: 在 Toolbar 增加 [View the Gherkin file] 按鈕
+DONE: 在 Panel 增加 檔案預覽空間
+DONE: 點下 [View the Gherkin file] 按鈕後，將 Panel 切換為檔案預覽空間，並顯示所上傳的檔案
+DONE: 檢視所上傳的檔案時，點下 [View the Gherkin file] 按鈕後，將檔案預覽空間切換為Panel
+DONE: 對關鍵字Given，When，Then，And，But螢光
+DONE: 按下上方NAV或左邊test suites的工具時，回到步驟檢視
+DONE: 改綁Test Suite
+DONE: 改為可對應整份文件，不能選的disabled
+DONE: 更改存檔格式為TestSuite綁Gherkin
+DONE: 沒有上傳Gherkin檔案的狀況下按下 [View the Gherkin file] 按鈕，便顯示出 No gherkin files uploaded 文字
+
+NO: 10
+STORY: 自動儲存、自動讀取
+STORY: 使用者錄製好Test Case後，想要離開，希望下次繼續編輯，他按下視窗右上方的關閉按鈕，再次打開瀏覽器上的"BDDWebRecorder"插件時，可以看到上次離開前的樣子。
+DONE: 自動儲存能夠儲存Gherkin欄位
+DONE: 自動讀取能夠讀取Gherkin欄位
+
+NO: 11
+STORY: 另存新檔、打開檔案
+STORY: 使用者想要將錄製好的Test Suite備份，以便還原做使用，他按下Test Suite旁的 [...] 按鈕，接著按下 [Save Test Suite As...] 存成.html檔案，接著在想要還原時按下 [Open Test Suite] 按鈕，並選擇儲存的.html檔案，即可匯入。
+DONE: 另存檔案能夠儲存Gherkin欄位
+DONE: 打開檔案能夠讀取Gherkin欄位
+DONE: 更改預設儲存為HTML
+
+NO: 12
+STORY: 給效能設置Assert
+STORY: 使用者希望某一步驟在一個限定的時間內完成，使用者可以按下 [Add new test step] 按鈕新增一個步驟，並在 [Command] 欄位中選擇 [elapsedTimeLessThen] 指令，並在 [Target] 欄位中輸入應完成的毫秒時間，接著步驟在Play的過程中若時間超過設置的時間，該步驟則會判定為失敗。
+DONE: 增加 elapsedTimeLessThen 指令
+DONE: 實作 elapsedTimeLessThen 指令
+DONE: 建立測試5秒後、10秒後響應的服務
+DONE: 測試功能是否正常
+DONE: 增加 elapsedTimeLessThen 指令的 Refrence
+
+NO: 13
+STORY: 查看測試報告
+STORY: 使用者在執行完畢測試案例後，希望能看到全盤的報告，他點選 [Reports] 按鈕，即可查看報告，報告內含有...
+DONE: 增加 report panel
+DONE: 執行完測試時，應自動在 report panel 產生報告
+DONE: P1 通過情形
+DONE: P2 Gherkin
+DONE: P3 我的插件
+DONE: P3 我的插件 增加開關
+DONE: P3 我的插件 改為Play時才動
+DONE: P3 我的插件 API1 顯示URL，長度以...
+DONE: 關閉視窗時清除資料
+DONE: Gherkin關鍵字變色
+
+NO: 14
+STORY: 播放時檢查Gherkin順序
+DONE: 點選 [Play] 按鈕時，檢查順序
+
+NO: 15
+STORY: 快速儲存
+STORY: 使用者想要將目前的編輯儲存，他按下 [Save] 按鈕，即可快速儲存至Browser的儲存空間中，下次打開時會讀取；在Save完後，Test Case旁的*會消失。
+TODO: 增加儲存按鈕
+TODO: 按下後儲存
+TODO: 儲存後將Test Case旁的*消失
+# 原本的版本是另存就會消失，不用改
+
+NO: 16
+STORY: BDD 資料驅動
+STORY: 使用者的.feature檔案中含有data-table，使用者想要在測試時自動帶入許多不同的參數做測試，他先將.feature檔案上傳至"BDDWebRecorder"插件中，接著便能在[Data Driven]頁籤中看見新增檔案，一個data-table對應一個檔案，在錄製編輯區域中使用"loadVars(fileName)"、${欄位}與"endLoadVars"即可迴圈執行並調用變數。
+DONE: 上傳Gherkin檔案時，分辨出每個data-table
+DONE: 將每個data-table上傳至Data Driven，並命名
+DONE: 執行時，可以調用
+DONE: 讀取檔案時，會跟著讀取Data Driven
+
+NO: 17
+STORY: 讀取畫面
+DONE: 進入時顯示Loading，蓋掉未讀取時的怪異現象
+DONE: 讀取結束時關閉Loading
+
+NO: 18
+STORY: 清除測試報告
+DONE: 增加清除報告按鈕/功能
+
+NO: 19
+STORY: 儲存測試報告，至Github
+DONE: 研究node.js push至git的方法
+DONE: 增加存檔按鈕
+DONE: 點下存檔後送請求至node.js - 檔名 - 描述
+DONE: node.js建檔 - 檔名加date
+DONE: 完善VIS Network
+DONE: 完善樣式
+DONE: 將commit command為必須
+DONE: 將檔名為必須
+DONE: 建檔完後push
+
+# 
+NO:
+STORY: 
+DONE:
+TODO:
+FIXME:
+
+initial.js
+playback.js
+bdd.js
+inuptFileTransformer.js appendTestSuite(suiteFile,suiteResult,suiteGherkin,suiteGherkinFileName)
+load_file.js readCase(f) fileToPanel(f)
+save_file.js panelToFile(str) downloadSuite(s_suite,callback) 
+panel\js\katalon\kar.js readSuiteFromString(test_suite) _loadSeleniumCommands()
+command_grid_toolbar.js 新增gherkin input event
+command_grid.js 新增getCommandGherkin(tr, for_show) 改addCommand(command_name, command_target_array, command_value, auto, insertCommand)
+context_menu.js copyCommand沒改？
+sortable-ui.js 排序多gherkin
+testcase_grid.js 點擊左邊時 reload gherkin
+kar.js scrape(word)(Refrence增加)

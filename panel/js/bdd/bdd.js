@@ -676,11 +676,12 @@ $('#saveToGit').click(function () {
         {
             title: 'Git Repository',
             text: 'e.g. https://github.com/yoyo82725/BWR.git',
-            inputValue: 'https://github.com/yoyo82725/BDDWebRecorderDemoSite.git',
+            inputValue: localStorage['savedGitUrl'] ? localStorage['savedGitUrl']:'https://github.com/yoyo82725/BDDWebRecorderDemoSite.git',
             inputValidator: (value) => {
                 return new Promise((resolve) => {
                     if (value.trim() != '') {
-                        resolve()
+                        localStorage['savedGitUrl'] = value;
+                        resolve();
                     } else {
                         resolve('Can Not Be Empty')
                     }

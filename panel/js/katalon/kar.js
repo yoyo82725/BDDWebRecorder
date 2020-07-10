@@ -240,7 +240,8 @@ function _loadSeleniumCommands() {
     commands.push('label');
 
     // # 改 時間判斷Command
-    commands.push('elapsedTimeLessThen');
+    commands.push('verifyElapsedTimeLessThen');
+    commands.push('assertElapsedTimeLessThen');
 
     commands.sort();
 
@@ -272,8 +273,8 @@ $(function () {
 function scrape(word) {
     emptyNode(document.getElementById("refercontainer"));
     // # 改
-    if (word == 'elapsedTimeLessThen') {
-        var template = `<dd><dt><strong>elapsedTimeLessThen(time)</strong></dt><dd><div>Arguments:</div><ul><li>time - the amount of time to limit (in milliseconds)</li></ul>Limit for the specified amount of time (in milliseconds)<p>Please see samples at <a href="https://github.com/katalon-studio/katalon-recorder-samples" target="_blank">Github</a>.</p></dd></dd>`;
+    if (word == 'verifyElapsedTimeLessThen' || word == 'assertElapsedTimeLessThen') {
+        var template = `<dd><dt><strong>verifyElapsedTimeLessThen(time)</strong></dt><dd><div>Arguments:</div><ul><li>time - the amount of time to limit (in milliseconds)</li></ul>Limit for the specified amount of time (in milliseconds)<p>Please see samples at <a href="https://github.com/katalon-studio/katalon-recorder-samples" target="_blank">Github</a>.</p></dd></dd>`;
         document.getElementById("refercontainer").innerHTML = template;
     } else {
         var command = new Command(word);

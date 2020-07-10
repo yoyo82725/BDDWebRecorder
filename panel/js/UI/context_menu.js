@@ -298,10 +298,11 @@ function copyCommand() {
                 targetElements.push([tempTarget]);
             }
         }
+        // # 改
         tempCommand[i] = {
             "command": getCommandName(ref[i]),
             "test": getCommandTarget(ref[i]),
-            "target": targetElements,
+            "target": targetElements || getCommandTarget(ref[i]),
             "value": getCommandValue(ref[i])
         };
         // console.log("showTarget: ", showTarget);
