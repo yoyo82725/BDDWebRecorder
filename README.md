@@ -8,8 +8,8 @@ API劫持需將 apitrack/BDDWebRecorder-sw.js 檔案放置專案根目錄
 感謝Katalon團隊與所有參與人的貢獻
 
 測試報告連結：
-[瀏覽商品.html](/demoPic/瀏覽商品.html "瀏覽商品.html")
-[優惠券.html](/demoPic/優惠券.html "優惠券.html")
+[瀏覽商品.html](http://htmlpreview.github.io/?https://github.com/yoyo82725/BDDWebRecorder/blob/master/demoPic/%E7%80%8F%E8%A6%BD%E5%95%86%E5%93%81.html "瀏覽商品.html")
+[優惠券.html](http://htmlpreview.github.io/?https://github.com/yoyo82725/BDDWebRecorder/blob/master/demoPic/%E5%84%AA%E6%83%A0%E5%88%B8.html "優惠券.html")
 
 內容截圖：
 ![Alt text](/demoPic/pic1.png "page6")
